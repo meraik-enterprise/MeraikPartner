@@ -2,13 +2,13 @@
 # Part of Odoo.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 {
-    "name": "Indaws-MerAIk Connection Base",
+    "name": "MerAIk Connection Base",
     "summary": "Base module for Indaws-MerAIk connection",
     "version": "17.0.1.1.0",
     "category": "AI",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",
-    "author": "inDAWS, MerAik,Aylen Garces",
+    "author": "MerAik,Aylen Garces",
     "depends": ["base","mail","base_automation"],
     "data": [
         "security/ir.model.access.csv",

@@ -13,11 +13,24 @@
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="open_document" string="Open Record Related"
+                                    type="object" class="oe_link" icon="fa-sitemap"
+                                    invisible="not model_id or res_id == 0"/>
+                        </div>
                         <group>
-                            <field name="contract_id" readonly="1"/>
-                            <field name="request_remote_id" readonly="1"/>
-                            <field name="response_date" readonly="1" invisible="state == 'pending'"/>
+                            <group>
+                                <field name="contract_id" readonly="state != 'pending' or request_remote_id"/>
+                                <field name="request_remote_id" readonly="1"/>
+                                <field name="response_date" readonly="1" invisible="state == 'pending'"/>
+                            </group>
+                            <group>
+                                <field name="model_id" readonly="1"/>
+                                <field name="res_id" readonly="1"/>
+                            </group>
                         </group>
+
+
                         <notebook>
                             <page string="Response JSON">
                                 <div>
@@ -44,6 +57,8 @@
                      <field name="contract_id" readonly="1"/>
                     <field name="request_remote_id"/>
                     <field name="response_date"/>
+                    <field name="model_id"/>
+                    <field name="res_id"/>
                     <field name="state" widget="badge" decoration-muted="state == 'cancel'" decoration-success="state == 'active'" decoration-info="state == 'draft'" decoration-danger="state == 'blocked'"/>
                 </tree>
             </field>
