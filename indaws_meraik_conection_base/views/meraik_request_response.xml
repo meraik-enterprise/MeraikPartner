@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- form view: vista principal -->
+        <record model="ir.ui.view" id="meraik_request_response_form_view">
+            <field name="name">meraik_request_response_form</field>
+            <field name="model">meraik.request.response</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="check_result" string="Check Result"
+                            type="object" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="request_remote_id" readonly="1"/>
+                            <field name="response_date" readonly="1" invisible="state == 'pending'"/>
+                        </group>
+                        <notebook>
+                            <page string="Response JSON">
+                                <div>
+                                    <field name="response_json" readonly="1"/>
+                                </div>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" groups="base.group_user"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!--tree view o list view -->
+        <record model="ir.ui.view" id="meraik_request_response_tree_view">
+            <field name="name">meraik_request_response_tree</field>
+            <field name="model">meraik.request.response</field>
+            <field name="arch" type="xml">
+                <tree decoration-muted="state == 'cancel'">
+                     <field name="contract_id" readonly="1"/>
+                    <field name="request_remote_id"/>
+                    <field name="response_date"/>
+                    <field name="state" widget="badge" decoration-muted="state == 'cancel'" decoration-success="state == 'active'" decoration-info="state == 'draft'" decoration-danger="state == 'blocked'"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- action list -->
+        <record model="ir.actions.act_window" id="action_meraik_request_response">
+              <field name="name">Meraik Request Response</field>
+              <field name="res_model">meraik.request.response</field>
+              <field name="view_mode">tree,form</field>
+        </record>
+    </data>
+</odoo>

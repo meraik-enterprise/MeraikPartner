@@ -1,0 +1,15 @@
+<odoo>
+    <data noupdate="1">
+    <record id="email_template_payroll_ai" model="mail.template">
+        <field name="name">Send Payroll to Employee</field>
+        <field name="email_from">{{ (object.company_id.email and '%s &lt;%s&gt;' % (object.company_id.name, object.company_id.email) or '') }}</field>
+        <field name="email_to">{{ object.employee_id.work_email }}</field>
+        <field name="subject">{{ object.attachment_id.name }}</field>
+        <field name="model_id" ref="model_payroll_ai_log" />
+        <field name="body_html" type="html">
+            <p>Hello</p>
+            <p>We attach the payroll.</p>
+        </field>
+    </record>
+    </data>
+</odoo>
