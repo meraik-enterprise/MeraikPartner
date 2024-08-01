@@ -2,7 +2,10 @@
 # Part of Odoo.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+import json
+import xmlrpc.client
 
 class MeraikRequestResponse(models.Model):
     _name = 'meraik.request.response'
@@ -18,4 +21,47 @@ class MeraikRequestResponse(models.Model):
         string="State", default='pending', tracking=True, copy=False)
 
     def check_result(self):
-        pass
+        try:
+            url = self.env['ir.config_parameter'].sudo().get_param('url_remote', '')
+            db = self.env['ir.config_parameter'].sudo().get_param('db_remote', '')
+            username = self.env['ir.config_parameter'].sudo().get_param('username', '')
+            password = self.env['ir.config_parameter'].sudo().get_param('password', '')
+            common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url))
+            uid = common.authenticate(db, username, password, {})
+            models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url))
+            remote_id = self.request_remote_id
+            result = models.execute_kw(db, uid, password, 'ai.contract.request', 'read', [[remote_id], ['state', 'response']])
+            response_date = fields.Datetime.now()
+            self.write({'state': result[0]['state'], 'response_json': result[0]['response'], 'response_date': response_date})
+            message = _("Request Response Checked Successfully!")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'message': message,
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+        except Exception as e:
+            message = _("Request Response Check Failed! %s") % str(e)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'message': message,
+                    'type': 'danger',
+                    'sticky': False,
+                }
+            }
+            self.write({'state': 'test', 'name': result[0]['New']})
+
+    def write(self, vals):
+        if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
+            vals['response_date'] = str(fields.Datetime.now())
+        return super(MeraikRequestResponse, self).write(vals)
+
+    def create(self, vals):
+        if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
+            vals['response_date'] = str(fields.Datetime.now())
+        return super(MeraikRequestResponse, self).create(vals)
