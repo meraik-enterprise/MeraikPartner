@@ -13,7 +13,7 @@ class MeraikContract(models.Model):
     _description = "MerAik Contract"
 
     name = fields.Char(string="Name", copy=False, default=lambda self: _('New'))
-    remote_id = fields.Integer(string="Remote ID", copy=False, tracking=True)
+    remote_id = fields.Integer(string="Contract Remote ID", copy=False, tracking=True)
     state = fields.Selection([
         ('draft','Draft'),
         ('test','Test'),
@@ -23,6 +23,7 @@ class MeraikContract(models.Model):
     ], string='State', tracking=True, default='draft')
     meraik_request_response_ids = fields.One2many("meraik.request.response", "contract_id", string="Request Responses")
     request_qty = fields.Integer(string="Request Quantity", compute="_compute_request_qty")
+    model_id = fields.Many2one('ir.model', string='Model Related', required=True, ondelete='cascade', index=True, tracking=True)
 
     def action_test_conection(self):
         try:
