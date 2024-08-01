@@ -1,0 +1,16 @@
+<odoo>
+
+     <menuitem id="menu_meraik_contract_root"
+            name="Meraik"
+            sequence="15">
+
+         <menuitem id="menu_meraik_contract"
+            action="action_meraik_contract"
+            sequence="10"/>
+
+        <menuitem id="menu_meraik_contract_request"
+                  action="action_meraik_request_response"
+            sequence="20"/>
+    </menuitem>
+
+</odoo>
