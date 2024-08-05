@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_my_home_sale" name="Show Quotations / Sales Orders" customize_show="True"
+              inherit_id="portal.portal_my_home" priority="20">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-if="request.env.user.check_if_employee()" t-call="portal.portal_docs_entry">
+                     <t t-set="title">Payrolls</t>
+                <t t-set="url" t-value="'/my/doc_payrolls'"/>
+                <t t-set="placeholder_count" t-value="'doc_payroll_count'"/>
+                </t>
+        </xpath>
+    </template>
+    <template id="portal_my_payroll_report_breadcrumbs" name="Portal layout : payroll report entries"
+              inherit_id="portal.portal_breadcrumbs" priority="25">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'doc_payroll_reports'"
+                t-attf-class="breadcrumb-item #{'active' if attachment_ids else ''}">
+                <t>My payrolls</t>
+            </li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_payroll_reports" name="My payroll(s)">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">My payrolls</t>
+            </t>
+            <t t-if="attachment_ids" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Payroll</th>
+                    </tr>
+                </thead>
+                <t t-foreach="attachment_ids" t-as="attachment">
+                    <tr>
+                        <td>
+                            <t t-out="attachment.name"/>
+                        </td>
+                        <td>
+                            <a t-attf-href="/web/content/ir.attachment/#{attachment.id}/datas?download=true"
+                               class="fa fa-download"/>
+                        </td>
+                    </tr>
+                </t>
+            </t>
+            <p t-else="">There are currently no payrolls for your account.</p>
+        </t>
+    </template>
+</odoo>
