@@ -22,7 +22,7 @@ class MeraikRequestResponse(models.Model):
         try:
             remote_id = self.request_remote_id
             uid, password, db, models = self.contract_id.get_conection_info()
-            result = models.execute_kw(db, uid, password, 'ai.contract.request', 'read', [[remote_id], ['state', 'response']])
+            result = models.execute_kw(db, uid, password, 'ai.contract.request.doc', 'read', [[remote_id], ['state', 'response']])
             response_date = fields.Datetime.now()
             self.write({'state': result[0]['state'], 'response_json': result[0]['response'], 'response_date': response_date})
             message = _("Request Response Checked Successfully!")
