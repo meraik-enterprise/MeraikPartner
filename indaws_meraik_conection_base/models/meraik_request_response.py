@@ -51,6 +51,9 @@ class MeraikRequestResponse(models.Model):
     def write(self, vals):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
+            for record in self:
+                if record.model_id and record.res_id:
+                    self.env[record.model_id.model].browse(record.res_id).process_response(record.response_json, vals['state'])
         return super(MeraikRequestResponse, self).write(vals)
 
     def create(self, vals):

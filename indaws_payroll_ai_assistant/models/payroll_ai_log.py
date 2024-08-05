@@ -64,7 +64,7 @@ class PayrollAiLog(models.Model):
                     list_of_ids = {'input_employee_ids': self.get_list_of_ids()}
                     list_of_ids = json.dumps(list_of_ids)
                     parse_info = self.get_parse_info()
-                    request_id = self.create_request(base64_image, list_of_ids, parse_info)
+                    request_id = self.create_request(base64_image, list_of_ids, parse_info, record.id)
                     record.write({'state': 'processing', 'meraik_request_id': request_id, 'response': False})
                 except Exception as e:
                     record.write({'response': e, 'state': 'error', 'num_tries': record.num_tries + 1})
@@ -77,6 +77,21 @@ class PayrollAiLog(models.Model):
             request_id = contract.create_request(base64_image, inputs, output_json)
             return request_id
         return False
+
+    def process_response(self, response=False, state=False):
+        try:
+            api_answer = response if response else self.response
+            remote_state = state if state else self.state
+            if remote_state in ['error', 'cancell']:
+                self.write({'response': api_answer, 'state': 'error', 'num_tries': self.num_tries + 1})
+            else:
+                self.write({'response': api_answer})
+                self.find_employee()
+        except Exception as e:
+            self.write({'response': e, 'state': 'error', 'num_tries': self.num_tries + 1})
+            # print(e)
+            return False
+
 
     def find_employee(self):
         for record in self:
