@@ -25,16 +25,35 @@ class MeraikContract(models.Model):
     request_qty = fields.Integer(string="Request Quantity", compute="_compute_request_qty")
     model_id = fields.Many2one('ir.model', string='Model Related', required=True, ondelete='cascade', index=True, tracking=True)
 
+    def get_conection_info(self):
+        url = self.env['ir.config_parameter'].sudo().get_param('url_remote', '')
+        db = self.env['ir.config_parameter'].sudo().get_param('db_remote', '')
+        username = self.env['ir.config_parameter'].sudo().get_param('username', '')
+        password = self.env['ir.config_parameter'].sudo().get_param('password', '')
+        common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url))
+        uid = common.authenticate(db, username, password, {})
+        models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url))
+        return uid, password,db,models
+
+    def create_request(self, data=False,inputs={},output_json={},res_id=False):
+        uid, password, db, models = self.get_conection_info()
+        vals = {'data': data,
+                'inputs': inputs,
+                'request': output_json}
+
+        result = models.execute_kw(db, uid, password, 'ai.contract', 'create_request',
+                                   [[self.remote_id], vals])
+        self.env['meraik.request.response'].create({
+            'contract_id': self.id,
+            'request_remote_id': result,
+            'res_id': res_id
+        })
+        return result
+
     def action_test_conection(self):
         try:
-            url = self.env['ir.config_parameter'].sudo().get_param('url_remote', '')
-            db = self.env['ir.config_parameter'].sudo().get_param('db_remote', '')
-            username = self.env['ir.config_parameter'].sudo().get_param('username', '')
-            password = self.env['ir.config_parameter'].sudo().get_param('password', '')
-            common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url))
-            uid = common.authenticate(db, username, password, {})
-            models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url))
             remote_id = self.remote_id
+            uid, password, db, models = self.get_conection_info()
             result = models.execute_kw(db, uid, password, 'ai.contract', 'read', [[remote_id], ['state', 'name']])
             self.write({'state': result[0]['state'],'name': result[0]['name']})
             message = _("Connection Test Successful!")

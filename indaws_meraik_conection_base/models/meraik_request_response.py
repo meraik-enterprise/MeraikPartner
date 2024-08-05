@@ -3,8 +3,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, _
-import xmlrpc.client
-
 class MeraikRequestResponse(models.Model):
     _name = 'meraik.request.response'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -20,20 +18,10 @@ class MeraikRequestResponse(models.Model):
     model_id = fields.Many2one('ir.model', string='Model Related', related='contract_id.model_id', store=True)
     res_id = fields.Integer(string='Record ID', copy=False, tracking=True)
 
-    def get_conection_info(self):
-        url = self.env['ir.config_parameter'].sudo().get_param('url_remote', '')
-        db = self.env['ir.config_parameter'].sudo().get_param('db_remote', '')
-        username = self.env['ir.config_parameter'].sudo().get_param('username', '')
-        password = self.env['ir.config_parameter'].sudo().get_param('password', '')
-        common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url))
-        uid = common.authenticate(db, username, password, {})
-        models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url))
-        return uid, password,db,models
-
     def check_result(self):
         try:
             remote_id = self.request_remote_id
-            uid, password, db, models = self.get_conection_info()
+            uid, password, db, models = self.contract_id.get_conection_info()
             result = models.execute_kw(db, uid, password, 'ai.contract.request', 'read', [[remote_id], ['state', 'response']])
             response_date = fields.Datetime.now()
             self.write({'state': result[0]['state'], 'response_json': result[0]['response'], 'response_date': response_date})
@@ -69,6 +57,7 @@ class MeraikRequestResponse(models.Model):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         return super(MeraikRequestResponse, self).create(vals)
+
     def open_document(self):
         if not self.model_id or not self.res_id:
             return False

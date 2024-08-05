@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_view_form" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit.payroll.ai.log</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_payroll_ai_logs"
+                    class="oe_stat_button"
+                    icon="fa-file-text"
+                    type="object">
+                    <field name="payroll_ai_log_count" widget="statinfo" string="Payrolls"/>
+                </button>
+            </xpath>
+             <xpath expr="//page[@name='hr_settings']" position="after">
+                <page name="payroll_ai_account_setting" string="Payroll AI setting">
+                    <group>
+                        <field name="extra_info"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

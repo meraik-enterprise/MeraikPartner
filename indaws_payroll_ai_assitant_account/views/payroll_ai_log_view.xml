@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="payroll_ai_log_form_view">
+            <field name="name">payroll_ai_log_form</field>
+            <field name="model">payroll.ai.log</field>
+            <field name="inherit_id" ref="indaws_payroll_ai_assistant.payroll_ai_log_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="account_move_id" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
