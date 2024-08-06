@@ -50,7 +50,6 @@ class HrExpense(models.Model):
                     list_of_ids = json.dumps(list_of_ids)
                     parse_info = self.get_parse_info()
                     request_id = self.create_request(base64_image, list_of_ids, parse_info)
-                    record.write({'meraik_request_id': request_id, 'response': False})
                     record.message_post(body=_('Request sent to Meraik AI Assistant.'))
                 except Exception as e:
                     record.write({'response': e})
