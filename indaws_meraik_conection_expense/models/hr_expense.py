@@ -18,7 +18,7 @@ class HrExpense(models.Model):
         return list_of_ids
 
     def get_list_of_expense_product_ids(self):
-        product_ids = self.env['product.product'].search([('company_id', '=', self.company_id.id),('can_be_expensed', '=', True)])
+        product_ids = self.env['product.product'].search([('can_be_expensed', '=', True)])
         list_of_ids = []
         for product in product_ids:
             #use description in expense category to provide more information of when to use this product
