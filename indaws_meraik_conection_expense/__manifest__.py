@@ -12,7 +12,7 @@
     "author": "MerAik, Aylen Garces, inDAWS",
     "depends": ["hr_expense","indaws_meraik_conection_base"],
     "data": [
-        "views/hr_expense_views.xml",
+        "views/hr_expense.xml",
     ],
     "installable": True,
     "auto_install": False,
