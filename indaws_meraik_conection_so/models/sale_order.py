@@ -48,10 +48,9 @@ class SaleOrder(models.Model):
         elif client_id:
             so = self.env['sale.order'].create({
                 'partner_id': client_id,
-                'origin': order_referece,
+                'client_order_ref': order_referece,
                 'date_order': date_order,
                 'response': response,
-                'notes': notes,
                 'order_line': so_line_data
             })
             so.write({'response': response})
