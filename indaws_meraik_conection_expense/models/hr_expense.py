@@ -42,7 +42,7 @@ class HrExpense(models.Model):
         for record in self:
             if record.state in ['draft']:
                 try:
-                    base64_image = self.get_image_from_pdf(record.attachment_id)
+                    base64_image = self.get_image_from_pdf(record.message_main_attachment_id)
                     list_of_ids = {
                         'input_employee_ids': self.get_list_of_employee_ids(),
                         'input_product_ids': self.get_list_of_expense_product_ids()
