@@ -10,6 +10,8 @@
                     <header>
                         <button name="check_result" string="Check Result"
                             type="object" class="oe_highlight"/>
+                        <button name="process_document" string="Process Document" invisible="state not in ('success', 'error_doc_processing')"
+                            type="object" class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>

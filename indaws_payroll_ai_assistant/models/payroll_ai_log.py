@@ -78,20 +78,17 @@ class PayrollAiLog(models.Model):
             return request_id
         return False
 
-    def process_response(self, response=False, state=False):
-        try:
-            api_answer = response if response else self.response
-            remote_state = state if state else self.state
-            if remote_state in ['error', 'cancell']:
-                self.write({'response': api_answer, 'state': 'error', 'num_tries': self.num_tries + 1})
-            else:
-                self.write({'response': api_answer})
-                self.find_employee()
-        except Exception as e:
-            self.write({'response': e, 'state': 'error', 'num_tries': self.num_tries + 1})
-            # print(e)
-            return False
-
+    def process_response(self, vals_response={}):
+        response = vals_response.get('response', False)
+        state = vals_response.get('state', False)
+        api_answer = response if response else self.response
+        remote_state = state if state else self.state
+        if remote_state in ['error', 'cancell']:
+            self.write({'response': api_answer, 'state': 'error', 'num_tries': self.num_tries + 1})
+        else:
+            self.write({'response': api_answer})
+            self.find_employee()
+        return self.id
 
     def find_employee(self):
         for record in self:
