@@ -4,9 +4,8 @@
 
 from odoo import fields, models, _
 import json
-
-class PurchaseOrder(models.Model):
-    _inherit = 'purchase.order'
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
 
     response = fields.Text(string="Response")
     def process_response(self, vals_response):
@@ -14,13 +13,13 @@ class PurchaseOrder(models.Model):
         res_id = self.id if self.id else False
 
         json_response = json.loads(response)
-        supplier_id = json_response.get('supplier_id', False)
-        supplier_name = json_response.get('supplier_name', False)
-        supplier_referece = json_response.get('purchase_order_number', False)
+        client_id = json_response.get('client_id', False)
+        client_name = json_response.get('client_name', False)
+        order_referece = json_response.get('sale_order_number', False)
         date_order = json_response.get('order_date', False)
         notes = json_response.get('notes', False)
 
-        po_line_data = []
+        so_line_data = []
         for item in json_response.get('item_list', []):
             product_id = int(item.get('product_id', False))
             product_qty = item.get('product_qty', False)
@@ -29,7 +28,7 @@ class PurchaseOrder(models.Model):
             product_uom = item.get('product_uom', False)
             if not product_uom:
                 product_uom = self.env['product.product'].browse(product_id).uom_id.id
-            po_line_data.append((0, 0, {
+            so_line_data.append((0, 0, {
                 'product_id': product_id,
                 'product_qty': product_qty,
                 'price_unit': price_unit,
@@ -37,21 +36,20 @@ class PurchaseOrder(models.Model):
                 'product_uom': product_uom
             }))
 
-
         if res_id:
             po = self.env['purchase.order'].browse(res_id)
             po.write({
-                'order_line': po_line_data
+                'order_line': so_line_data
             })
             self.write({'response': response})
-        elif supplier_id:
+        elif client_id:
             po = self.env['purchase.order'].create({
-                'partner_id': supplier_id,
-                'partner_ref': supplier_referece,
+                'partner_id': client_id,
+                'origin': order_referece,
                 'date_order': date_order,
                 'response': response,
                 'notes': notes,
-                'order_line': po_line_data
+                'order_line': so_line_data
             })
             po.write({'response': response})
             res_id = po.id
