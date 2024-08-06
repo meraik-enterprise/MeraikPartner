@@ -54,6 +54,7 @@ class HrExpense(models.Model):
                     record.message_post(body=_('Request sent to Meraik AI Assistant.'))
                 except Exception as e:
                     record.write({'response': e})
+                    record.message_post(body=_('Error sending request to Meraik AI Assistant.\n%s') % e)
                     return False
 
     def create_request(self, base64_image, inputs={}, output_json={}):
