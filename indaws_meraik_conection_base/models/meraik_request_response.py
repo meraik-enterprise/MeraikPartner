@@ -64,9 +64,10 @@ class MeraikRequestResponse(models.Model):
     def open_document(self):
         if not self.model_id or not self.res_id:
             return False
-        else:
+        elif self.model_id and self.res_id:
             document = self.env[self.model_id.model].search([('id', '=', self.res_id)])
             if not document:
+                self.res_id = False
                 return False
         return {
             'view_mode': 'form',
