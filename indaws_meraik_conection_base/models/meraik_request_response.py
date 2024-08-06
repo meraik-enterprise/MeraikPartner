@@ -13,7 +13,7 @@ class MeraikRequestResponse(models.Model):
     response_json = fields.Text(string='Response JSON', copy=False, tracking=True)
     response_date = fields.Datetime(string='Response Date', copy=False, tracking=True)
     state = fields.Selection(
-        [('pending', 'Pending'), ('success', 'Success'), ('error', 'Error'), ('cancel', 'Canceled')],
+        [('pending', 'Pending'), ('success', 'Success'), ('error', 'Error'), ('error_doc_processing','Error Document'),('cancel', 'Canceled')],
         string="State", default='pending', tracking=True, copy=False)
     model_id = fields.Many2one('ir.model', string='Model Related', related='contract_id.model_id', store=True)
     res_id = fields.Integer(string='Record ID', copy=False, tracking=True)
@@ -52,9 +52,8 @@ class MeraikRequestResponse(models.Model):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         res = super(MeraikRequestResponse, self).write(vals)
-        for record in self:
-            if record.model_id and record.res_id:
-                self.env[record.model_id.model].browse(record.res_id).process_response(record.response_json, record.state)
+        if 'state' in vals and vals['state'] == 'success' and not self._context.get('process_document', True):
+            self.process_document()
         return res
 
     def create(self, vals):
@@ -71,3 +70,21 @@ class MeraikRequestResponse(models.Model):
             'res_id': self.res_id,
             'type': 'ir.actions.act_window',
         }
+
+    def process_document(self):
+        for record in self:
+            try:
+                vals_response = {}
+                vals_response['response'] = record.response_json
+                vals_response['state'] = record.state
+                if record.model_id and record.res_id:
+                    self.env[record.model_id.model].browse(record.res_id).process_response(vals_response)
+                else:
+                    res_id = self.env[record.model_id.model].process_response(vals_response)
+                    record.write({'res_id': res_id})
+                if record.state == 'error_doc_processing':
+                    record.with_context(process_document=False).write({'state': 'success'})
+            except Exception as e:
+                record.message_post(body=_('Error processing document: %s') % str(e))
+                record.write({'state': 'error_doc_processing'})
+        return False
