@@ -55,7 +55,9 @@ class MeraikContract(models.Model):
             remote_id = self.remote_id
             uid, password, db, models = self.get_conection_info()
             result = models.execute_kw(db, uid, password, 'ai.contract', 'read', [[remote_id], ['state', 'name']])
+            show_message = True if self.state == 'draft' else False
             self.write({'state': result[0]['state'],'name': result[0]['name']})
+
             message = _("Connection Test Successful!")
             return {
                 'type': 'ir.actions.client',
@@ -64,6 +66,7 @@ class MeraikContract(models.Model):
                     'message': message,
                     'type': 'success',
                     'sticky': False,
+                    'next': {'type': 'ir.actions.act_window_close'},
                 }
             }
         except Exception as e:
@@ -75,6 +78,7 @@ class MeraikContract(models.Model):
                     'message': message,
                     'type': 'danger',
                     'sticky': False,
+                    'next': {'type': 'ir.actions.act_window_close'},
                 }
             }
             self.write({'state': 'test', 'name': result[0]['New']})

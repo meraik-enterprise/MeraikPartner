@@ -37,13 +37,16 @@ class SaleOrder(models.Model):
             }))
 
         if res_id:
-            po = self.env['purchase.order'].browse(res_id)
-            po.write({
+            so = self.env['sale.order'].browse(res_id)
+            so.write({
+                'order_line': [(5, 0, 0)]
+            })
+            so.write({
                 'order_line': so_line_data
             })
             self.write({'response': response})
         elif client_id:
-            po = self.env['purchase.order'].create({
+            so = self.env['sale.order'].create({
                 'partner_id': client_id,
                 'origin': order_referece,
                 'date_order': date_order,
@@ -51,6 +54,6 @@ class SaleOrder(models.Model):
                 'notes': notes,
                 'order_line': so_line_data
             })
-            po.write({'response': response})
-            res_id = po.id
+            so.write({'response': response})
+            res_id = so.id
         return res_id

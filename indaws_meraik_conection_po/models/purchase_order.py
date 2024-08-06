@@ -19,6 +19,8 @@ class PurchaseOrder(models.Model):
         supplier_referece = json_response.get('purchase_order_number', False)
         date_order = json_response.get('order_date', False)
         notes = json_response.get('notes', False)
+        if notes == 'not_found':
+            notes = False
 
         po_line_data = []
         for item in json_response.get('item_list', []):
@@ -40,6 +42,10 @@ class PurchaseOrder(models.Model):
 
         if res_id:
             po = self.env['purchase.order'].browse(res_id)
+            po.write({
+                'order_line': [(5, 0, 0)]
+            })
+
             po.write({
                 'order_line': po_line_data
             })
