@@ -67,10 +67,13 @@ class HrExpense(models.Model):
         response = vals_response.get('response', False)
         res_id = self.id if self.id else False
         json_response = json.loads(response)
-        employee_id = json_response.get('employee_id', False)
-        product_id = json_response.get('product_id', False)
+        employee_id = json_response.get('odoo_id_employee', False)
+        product_id = json_response.get('odoo_id_product', False)
         total_amount_currency = json_response.get('total_amount_currency', False)
         date = json_response.get('date', False)
+
+        if not product_id or product_id == 'not_found':
+            product_id = self.env['product.product'].search([('can_be_expensed', '=', True)], limit=1).id
 
         if res_id:
             self.write({
