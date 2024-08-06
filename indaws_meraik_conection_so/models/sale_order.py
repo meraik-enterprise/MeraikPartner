@@ -30,7 +30,7 @@ class SaleOrder(models.Model):
                 product_uom = self.env['product.product'].browse(product_id).uom_id.id
             so_line_data.append((0, 0, {
                 'product_id': product_id,
-                'product_qty': product_qty,
+                'product_uom_qty': product_qty,
                 'price_unit': price_unit,
                 'name': description,
                 'product_uom': product_uom
