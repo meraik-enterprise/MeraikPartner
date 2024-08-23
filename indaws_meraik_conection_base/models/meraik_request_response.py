@@ -3,6 +3,10 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, _
+
+import logging
+_logger = logging.getLogger(__name__)
+
 class MeraikRequestResponse(models.Model):
     _name = 'meraik.request.response'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -52,7 +56,8 @@ class MeraikRequestResponse(models.Model):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         res = super(MeraikRequestResponse, self).write(vals)
-        if 'state' in vals and vals['state'] == 'success' and not self._context.get('process_document', True):
+        _logger.info('state: %s, process_document: %s', vals.get('state','null'), self.env.context.get('process_document', 'null'))
+        if 'state' in vals and vals['state'] == 'success' and not self.env.context.get('process_document', True):
             self.process_document()
         return res
 
@@ -60,7 +65,9 @@ class MeraikRequestResponse(models.Model):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         res = super(MeraikRequestResponse, self).create(vals)
-        if res.state == 'success' and not self._context.get('process_document', True):
+        _logger.info('state: %s, process_document: %s', vals.get('state', 'null'),
+                     self.env.context.get('process_document', 'null'))
+        if res.state == 'success' and not self.env.context.get('process_document', True):
             res.process_document()
         return res
 
