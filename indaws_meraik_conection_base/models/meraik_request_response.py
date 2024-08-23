@@ -59,7 +59,10 @@ class MeraikRequestResponse(models.Model):
     def create(self, vals):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
-        return super(MeraikRequestResponse, self).create(vals)
+        res = super(MeraikRequestResponse, self).create(vals)
+        if res.state == 'success' and not self._context.get('process_document', True):
+            res.process_document()
+        return res
 
     def open_document(self):
         if not self.model_id or not self.res_id:
