@@ -22,9 +22,9 @@ vals = {
     'response_json':payload.get('response'),
 }
 if request_id:
-    request_id.write(vals)
+    request_id.with_context(process_document=True).write(vals)
 else:
-    env['meraik.request.response'].create(vals)
+    env['meraik.request.response'].with_context(process_document=True).create(vals)
         </field>
     </record>
 </odoo>
