@@ -4,6 +4,7 @@
 
 from odoo import fields, models, _
 import json
+import base64
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -12,6 +13,7 @@ class AccountMove(models.Model):
     def process_response(self, vals_response):
         response = vals_response.get('response', False)
         res_id = self.id if self.id else False
+        res_name = self.name if self.name else ''
 
         json_response = json.loads(response)
 
@@ -42,7 +44,6 @@ class AccountMove(models.Model):
                     'product_uom_id': product_uom
                 }))
 
-
             if res_id:
                 am = self.env['purchase.order'].browse(res_id)
                 am.write({
@@ -65,4 +66,19 @@ class AccountMove(models.Model):
                 })
                 am.write({'response': response})
                 res_id = am.id
+                res_name = am.name
+
+            if json_response.get('doc_data', False):
+                doc_data = json_response.get('doc_data')
+                attachment_data = {
+                    'name': json_response.get('doc_name','Attachment'),
+                    'type': 'binary',
+                    'datas': base64.b64decode(doc_data),
+                    'res_model': 'account.move',
+                    'res_id': res_id,
+                    'res_name': res_name,
+                }
+                self.env['ir.attachment'].create(attachment_data)
+
+
         return res_id
