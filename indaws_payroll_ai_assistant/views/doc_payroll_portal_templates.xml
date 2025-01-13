@@ -39,8 +39,8 @@
                             <t t-out="attachment.name"/>
                         </td>
                         <td>
-                            <a t-attf-href="/web/content/ir.attachment/#{attachment.id}/datas?download=true"
-                               class="fa fa-download"/>
+<!--                            <a t-att-href="'/web/content/?model=ir.attachment&amp;id=%d&amp;filename_field=name&amp;field=datas&amp;download=true&amp;filename=%s' % (attachment.id, attachment.name)" class="fa fa-download"/>-->
+                            <a t-att-href="'/download/attachment/%d' % attachment.id" class="fa fa-download"/>
                         </td>
                     </tr>
                 </t>
