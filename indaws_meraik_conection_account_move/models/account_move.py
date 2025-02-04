@@ -34,15 +34,19 @@ class AccountMove(models.Model):
                 price_unit = item.get('price_unit', False)
                 description = item.get('description', False)
                 product_uom = item.get('product_uom', False)
+                discount = item.get('discount', False)
                 if not product_uom:
                     product_uom = self.env['product.product'].browse(product_id).uom_id.id
                 invoice_line_data.append((0, 0, {
                     'product_id': product_id,
                     'quantity': product_qty,
                     'price_unit': price_unit,
-                    # 'name': description,
-                    'product_uom_id': product_uom
+                    'name': description,
+                    'product_uom_id': product_uom,
+                    'discount': discount
                 }))
+
+
 
             if res_id:
                 am = self.env['purchase.order'].browse(res_id)
