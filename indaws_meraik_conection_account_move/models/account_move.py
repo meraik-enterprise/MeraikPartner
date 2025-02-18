@@ -23,7 +23,7 @@ class AccountMove(models.Model):
             supplier_id = json_response.get('supplier_id', False)
             supplier_name = json_response.get('supplier_name', False)
             supplier_referece = json_response.get('vendor_bill_number', False)
-            date_order = json_response.get('order_date', False)
+            date_order = json_response.get('invoice_date', False)
             notes = json_response.get('notes', False)
             global_discount = json_response.get('gobal_discount', False)
 
