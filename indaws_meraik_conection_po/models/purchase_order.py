@@ -9,7 +9,8 @@ import base64
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
-    response = fields.Text(string="Response")
+    response = fields.Text(string="Response", copy=False)
+
     def process_response(self, vals_response):
         response = vals_response.get('response', False)
         res_id = self.id if self.id else False

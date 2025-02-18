@@ -8,7 +8,7 @@ import json
 class HrExpense(models.Model):
     _inherit = 'hr.expense'
 
-    response = fields.Text(string="Response")
+    response = fields.Text(string="Response", copy=False)
 
     def get_list_of_employee_ids(self):
         employee_ids = self.env['hr.employee'].search([('company_id', '=', self.company_id.id)])
