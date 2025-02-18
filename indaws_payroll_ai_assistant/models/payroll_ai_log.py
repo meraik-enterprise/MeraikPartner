@@ -18,8 +18,8 @@ class PayrollAiLog(models.Model):
         comodel_name="ir.attachment",
         string="Attachement",
     )
-    payroll_date = fields.Date(string="Payroll Date")
-    response = fields.Text(string="Response")
+    payroll_date = fields.Date(string="Payroll Date", copy=False)
+    response = fields.Text(string="Response", copy=False)
     process_log = fields.Text(string="Process Log")
     state = fields.Selection([('pending', 'Pending'),('processing', 'Processing'),('success', 'Success'),('error','Error'),('error_processing', 'Error Processing'),('cancell','Canceled')],
                              string="State", default='pending', tracking=True, copy=False)
