@@ -2,10 +2,10 @@
 # Part of Odoo.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 {
-    "name": "Indaws Payroll Assistant -ACCOUNT",
-    "summary": "Indaws Payroll Assistant - ACCOUNT",
+    "name": "Meraik Indaws Payroll Assistant -ACCOUNT",
+    "summary": "Meraik Indaws Payroll Assistant - ACCOUNT",
     "description": "This module expands the functionality of the Payroll AI Assistant module, adding the functionality of creating the accounting entries for the payroll.",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.1.0",
     "category": "HR",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",

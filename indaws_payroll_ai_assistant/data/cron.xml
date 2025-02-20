@@ -7,8 +7,6 @@
             <field name="state">code</field>
             <field name="code">model.mass_process_attachment_with_ai(limit=1)</field>
             <field name="interval_number">2</field>
-            <field name="numbercall">-1</field>
-            <field eval="False" name="doall" />
             <field name="interval_type">minutes</field>
         </record>
     </data>

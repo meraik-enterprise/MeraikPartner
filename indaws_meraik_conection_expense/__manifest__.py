@@ -5,7 +5,7 @@
     "name": "MerAik Indaws Expenses",
     "summary": "MerAik Indaws Expenses",
     "description": "This module allows you to connect expenses with MerAik",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.1.0",
     "category": "HR",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",

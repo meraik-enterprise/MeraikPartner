@@ -50,19 +50,19 @@
             </field>
         </record>
 
-        <!--tree view o list view -->
-        <record model="ir.ui.view" id="meraik_request_response_tree_view">
-            <field name="name">meraik_request_response_tree</field>
+        <!--list view o list view -->
+        <record model="ir.ui.view" id="meraik_request_response_list_view">
+            <field name="name">meraik_request_response_list</field>
             <field name="model">meraik.request.response</field>
             <field name="arch" type="xml">
-                <tree decoration-muted="state == 'cancel'">
+                <list decoration-muted="state == 'cancel'">
                      <field name="contract_id" readonly="1"/>
                     <field name="request_remote_id"/>
                     <field name="response_date"/>
                     <field name="model_id"/>
                     <field name="res_id"/>
                     <field name="state" widget="badge" decoration-muted="state == 'cancel'" decoration-success="state == 'active'" decoration-info="state == 'draft'" decoration-danger="state == 'blocked'"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -70,7 +70,7 @@
         <record model="ir.actions.act_window" id="action_meraik_request_response">
               <field name="name">Meraik Request Response</field>
               <field name="res_model">meraik.request.response</field>
-              <field name="view_mode">tree,form</field>
+              <field name="view_mode">list,form</field>
         </record>
     </data>
 </odoo>

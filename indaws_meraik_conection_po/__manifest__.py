@@ -5,7 +5,7 @@
     "name": "MerAik Indaws Purchase Order",
     "summary": "MerAik Indaws Purchase Order",
     "description": "This module allows you to connect Purchase Orders with MerAik",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.1.0",
     "category": "HR",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",

@@ -5,7 +5,7 @@
     "name": "MerAik Indaws Payroll AI assistant",
     "summary": "Payroll AI assistant",
     "description": "This module allows you to split payroll PDFs into multiple PDFs and send to employees by email.",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.1.0",
     "category": "HR",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",

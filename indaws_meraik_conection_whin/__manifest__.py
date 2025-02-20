@@ -5,7 +5,7 @@
     "name": "MerAik Indaws WHIN",
     "summary": "MerAik Indaws WHIN",
     "description": "This module allows you to connect incoming transfer with MerAik",
-    "version": "17.0.1.1.0",
+    "version": "18.0.1.1.0",
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",
     "author": "MerAik, Aylen Garces, inDAWS",
