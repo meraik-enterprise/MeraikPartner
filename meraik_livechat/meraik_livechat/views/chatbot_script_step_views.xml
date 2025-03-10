@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo><data>
+
+    <record id="chatbot_script_step_view_form" model="ir.ui.view">
+        <field name="name">chatbot.script.step.view.form</field>
+        <field name="model">chatbot.script.step</field>
+        <field name="inherit_id" ref="im_livechat.chatbot_script_step_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/group/group/field[@name='step_type']" position="after">
+                <field name="step_cyclic"/>
+            </xpath>
+        </field>
+    </record>
+</data></odoo>
