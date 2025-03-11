@@ -36,8 +36,7 @@ class DiscussChannel(models.Model):
             else:
                 conversation_id = self.conversation_id
 
-        api_key = "sk-HgKCtSYvXhQqWDgp2W75aDbB1Ijf6Ec7"
-        api_key2 = self.sudo().livechat_channel_id.api_key
+        api_key = self.sudo().livechat_channel_id.api_key
 
         # Verifica la URL exacta en la documentación
         url = "https://api.chat-data.com/api/v2/chat"
