@@ -11,6 +11,7 @@ class MeraikRequestResponse(models.Model):
     _name = 'meraik.request.response'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Meraik Request Response'
+    _order = 'create_date desc'
 
     contract_id = fields.Many2one('meraik.contract', string='Contract', ondelete='cascade', required=True, tracking=True)
     request_remote_id = fields.Integer(string='Request Remote ID', copy=False, tracking=True)
