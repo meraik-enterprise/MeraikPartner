@@ -1,0 +1,156 @@
+<odoo>
+<data noupdate="1">
+    <record model="ir.actions.server" id="action_process_response_account_move">
+        <field name="name">Meraik Action - Process Request - Account Move</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="state">code</field>
+        <field name="code">
+response = env.context.get('vals_response','{}')
+
+res_id = False
+res_name = ''
+
+json_response = json.loads(response)
+
+# vendor bills
+if json_response.get('vendor_bill_number', False):
+    supplier_id = json_response.get('supplier_id', False)
+    if supplier_id == 'not_found':
+        supplier_id = False
+
+    supplier_name = json_response.get('supplier_name', False)
+    supplier_referece = json_response.get('vendor_bill_number', False)
+    if supplier_referece == 'not_found':
+        supplier_referece = False
+
+    invoice_date = json_response.get('invoice_date', False)
+    if invoice_date == 'not_found':
+        invoice_date = False
+
+    invoice_due = json_response.get('invoice_due', False)
+    if invoice_due == 'not_found':
+        invoice_due = False
+
+    notes = json_response.get('notes', False)
+    if notes == 'not_found':
+        notes = False
+
+    global_discount = json_response.get('gobal_discount', False)
+    if global_discount == 'not_found':
+        global_discount = False
+
+    invoice_line_data = []
+    for item in json_response.get('item_list', []):
+        _logger.info('product_id')
+        product_id_str = item.get('product_id', 0)
+        _logger.info(product_id_str)
+        if product_id_str == 'not_found':
+            _logger.info('product_id not_found')
+            product_id_str = '0'
+        if isinstance(product_id_str, str):
+            product_id = int(product_id_str, 0)
+        else:
+            product_id = product_id_str
+
+        _logger.info('product_qty')
+        product_qty_str = item.get('product_qty', 0)
+        if product_qty_str == 'not_found':
+            product_qty_str = '0'
+        if isinstance(product_qty_str, str):
+            product_qty = float(product_qty_str)
+        else:
+            product_qty = product_qty_str
+
+        _logger.info('price_unit')
+        price_unit_str = item.get('price_unit', False)
+        if price_unit_str == 'not_found':
+            price_unit_str = '0'
+        if isinstance(price_unit_str, str):
+            price_unit = float(price_unit_str)
+        else:
+            price_unit = price_unit_str
+
+        description = item.get('description', False)
+        product_uom = item.get('product_uom', False)
+
+        discount = item.get('discount', False)
+
+        discount_str = item.get('discount', False)
+        if discount_str == 'not_found':
+            discount_str = '0'
+        if isinstance(discount_str, str):
+            discount = float(discount_str)
+        else:
+            discount = discount_str
+
+        related_purchase_order = item.get('related_purchase_order', False)
+        product_name = item.get('product_name', False)
+
+        if not product_id and product_name:
+            product = env['product.product'].search([('default_code', '=', product_name)], limit=1)
+            _logger.info('product_name')
+            if product:
+                product_id = product.id
+                _logger.info(product_id.name)
+
+        # Find the purchase order line
+        purchase_line_id = False
+        if related_purchase_order and product_id:
+            purchase_order = env['purchase.order'].search([('name', '=', related_purchase_order)], limit=1)
+            if purchase_order:
+                for line in purchase_order.order_line:
+                    if line.product_id.id == product_id:
+                        purchase_line_id = line.id
+                        _logger.info('purchase_line_id founded')
+                        break  # Stop after the first matching line
+
+        if not product_uom and product_id:
+            product_uom = env['product.product'].browse(product_id).uom_id.id
+
+        invoice_line_data.append((0, 0, {
+            'product_id': product_id if product_id else False,
+            'quantity': product_qty,
+            'price_unit': price_unit,
+            'name': description,
+            'product_uom_id': product_uom if product_uom else False,
+            'discount': discount,
+            'purchase_line_id': purchase_line_id if purchase_line_id else False  # Add purchase order line ID
+        }))
+
+    if res_id:
+        am = env['account.move'].browse(res_id)
+        _logger.info('res_id 1: %s', res_id)
+        am.write({
+            'invoice_line_ids': [(5, 0, 0)]
+        })
+
+        am.write({
+            'invoice_line_ids': invoice_line_data
+        })
+        am.write({'response': response})
+        _logger.info('am updated')
+    elif supplier_id:
+        am = env['account.move'].create({
+            'partner_id': supplier_id,
+            'ref': supplier_referece,
+            'invoice_date': invoice_date,
+            'invoice_date_due': invoice_due,
+            'response': response,
+            'narration': notes,
+            'move_type': 'in_invoice',
+            'invoice_line_ids': invoice_line_data
+        })
+        _logger.info('am created')
+        am.write({'response': response})
+        res_id = am.id
+        _logger.info('res_id 2: %s', res_id)
+        res_name = am.name
+
+action = {'res_id':res_id, 'res_name':res_name}
+
+
+        </field>
+    </record>
+</data>
+</odoo>
