@@ -21,8 +21,11 @@ class AccountMove(models.Model):
 
         server_action = self.env.ref('indaws_meraik_conection_account_move.action_process_response_account_move')
         response = vals_response.get('response', '{}')
-        move_json = server_action.with_context(vals_response=response).run()
+        move_json_str = server_action.with_context(vals_response=response).run()
         json_response = json.loads(response)
+        _logger.info('move_json')
+        _logger.info(move_json_str)
+        move_json = json.loads(move_json_str)
         res_id = move_json.get('res_id', False)
         res_name = move_json.get('res_name', '')
 

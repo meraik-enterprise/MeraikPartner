@@ -6,12 +6,13 @@
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="state">code</field>
         <field name="code">
-response = env.context.get('vals_response','{}')
+
+vals_response = env.context.get('vals_response','{}')
 
 res_id = False
 res_name = ''
 
-json_response = json.loads(response)
+json_response = json.loads(vals_response)
 
 # vendor bills
 if json_response.get('vendor_bill_number', False):
@@ -128,7 +129,7 @@ if json_response.get('vendor_bill_number', False):
         am.write({
             'invoice_line_ids': invoice_line_data
         })
-        am.write({'response': response})
+        am.write({'response': vals_response})
         _logger.info('am updated')
     elif supplier_id:
         am = env['account.move'].create({
@@ -136,18 +137,19 @@ if json_response.get('vendor_bill_number', False):
             'ref': supplier_referece,
             'invoice_date': invoice_date,
             'invoice_date_due': invoice_due,
-            'response': response,
+            'response': vals_response,
             'narration': notes,
             'move_type': 'in_invoice',
             'invoice_line_ids': invoice_line_data
         })
         _logger.info('am created')
-        am.write({'response': response})
+        am.write({'response': vals_response})
         res_id = am.id
         _logger.info('res_id 2: %s', res_id)
         res_name = am.name
 
-action = {'res_id':res_id, 'res_name':res_name}
+action_response = {'res_id':res_id, 'res_name':res_name}
+action = json.dumps(action_response)
 
 
         </field>
