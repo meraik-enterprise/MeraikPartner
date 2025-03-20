@@ -60,6 +60,7 @@ class MeraikRequestResponse(models.Model):
         _logger.info('WRITE LOG: state: %s, process_document: %s', vals.get('state','null'), self.env.context.get('process_document', 'null'))
         if 'state' in vals and vals['state'] == 'success' and self.env.context.get('process_document', False):
             self.process_document()
+
         return res
 
     def create(self, vals):
@@ -104,4 +105,16 @@ class MeraikRequestResponse(models.Model):
             except Exception as e:
                 record.message_post(body=_('Error processing document: %s') % str(e))
                 record.write({'state': 'error_doc_processing'})
+                record.send_feedback_to_platform(str(e))
         return False
+
+    def send_feedback_to_platform(self, message_error):
+        for record in self:
+            try:
+                message = 'Client Error: %s' % message_error
+                remote_id = self.request_remote_id
+                uid, password, db, models = self.contract_id.get_conection_info()
+                models.execute_kw(db, uid, password, 'ai.contract.request.doc', 'write',
+                                           [[remote_id], {'state': 'error', 'response': message}])
+            except:
+                record.message_post(body=_('Error sending feedback to platform'))
