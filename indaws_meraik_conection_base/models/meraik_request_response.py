@@ -112,8 +112,8 @@ class MeraikRequestResponse(models.Model):
         for record in self:
             try:
                 message = 'Client Error: %s' % message_error
-                remote_id = self.request_remote_id
-                uid, password, db, models = self.contract_id.get_conection_info()
+                remote_id = record.request_remote_id
+                uid, password, db, models = record.contract_id.get_conection_info()
                 models.execute_kw(db, uid, password, 'ai.contract.request.doc', 'write',
                                            [[remote_id], {'state': 'error', 'response': message}])
             except:
