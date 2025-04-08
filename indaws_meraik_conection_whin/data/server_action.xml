@@ -56,9 +56,6 @@ if json_response.get('delivery_note_number', False):
             ('state', 'not in', ['done', 'cancel'])  # Solo si no está finalizado o cancelado
         ], limit=1)
 
-        res_id = stock_picking.id if stock_picking else False
-        res_name = stock_picking.name if stock_picking else False
-
         move_data = []
         for item in items:
             product_id = int(item.get('product_id', False))
@@ -122,6 +119,9 @@ if json_response.get('delivery_note_number', False):
                 'picking_type_id': purchase_order.picking_type_id.id,
                 'move_ids': move_data
             })
+
+        res_id = stock_picking.id if stock_picking else False
+        res_name = stock_picking.name if stock_picking else False
 
         stock_picking.write({'response': False})
 
