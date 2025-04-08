@@ -7,12 +7,20 @@
         <field name="state">code</field>
         <field name="code">
 
+
+
 vals_response = env.context.get('vals_response','{}')
 
 res_id = False
 res_name = ''
+am=False
 
 json_response = json.loads(vals_response)
+
+purchase_order_ids = []
+
+invoice_line_data = []
+po_lines_dict = {} # Dictionary to group invoice lines by purchase order
 
 # vendor bills
 if json_response.get('vendor_bill_number', False):
@@ -37,11 +45,21 @@ if json_response.get('vendor_bill_number', False):
     if notes == 'not_found':
         notes = False
 
-    global_discount = json_response.get('gobal_discount', False)
+    global_discount = json_response.get('gobal_discount', False) # typo in original code: gobal_discount
     if global_discount == 'not_found':
         global_discount = False
 
-    invoice_line_data = []
+    total_amount_str = json_response.get('total_amount', 0)
+    if total_amount_str == 'not_found':
+        total_amount_str = '0'
+    if isinstance(total_amount_str, str):
+        total_amount = float(total_amount_str)
+    else:
+        total_amount = total_amount_str
+
+    is_credit_note = json_response.get('is_credit_note', False)
+    new_partner = json_response.get('new_partner', False)
+
     for item in json_response.get('item_list', []):
         _logger.info('product_id')
         product_id_str = item.get('product_id', 0)
@@ -72,10 +90,16 @@ if json_response.get('vendor_bill_number', False):
         else:
             price_unit = price_unit_str
 
+        total_price_str = item.get('total_price', False)
+        if total_price_str == 'not_found':
+            total_price_str = '0'
+        if isinstance(total_price_str, str):
+            total_price = float(total_price_str)
+        else:
+            total_price = total_price_str
+
         description = item.get('description', False)
         product_uom = item.get('product_uom', False)
-
-        discount = item.get('discount', False)
 
         discount_str = item.get('discount', False)
         if discount_str == 'not_found':
@@ -84,6 +108,9 @@ if json_response.get('vendor_bill_number', False):
             discount = float(discount_str)
         else:
             discount = discount_str
+
+
+
 
         related_purchase_order = item.get('related_purchase_order', False)
         product_name = item.get('product_name', False)
@@ -100,6 +127,8 @@ if json_response.get('vendor_bill_number', False):
         if related_purchase_order and product_id:
             purchase_order = env['purchase.order'].search([('name', '=', related_purchase_order)], limit=1)
             if purchase_order:
+                if not purchase_order.id in purchase_order_ids:
+                    purchase_order_ids.append(purchase_order.id)
                 for line in purchase_order.order_line:
                     if line.product_id.id == product_id:
                         purchase_line_id = line.id
@@ -109,15 +138,48 @@ if json_response.get('vendor_bill_number', False):
         if not product_uom and product_id:
             product_uom = env['product.product'].browse(product_id).uom_id.id
 
-        invoice_line_data.append((0, 0, {
+        is_landed_costs_line = item.get('is_delivery_cost_line', False)
+
+        if is_landed_costs_line and not price_unit:
+            continue
+
+        if supplier_id == 9416:
+            product_qty = 1
+            price_unit = total_price
+
+        line_data = {
             'product_id': product_id if product_id else False,
             'quantity': product_qty,
             'price_unit': price_unit,
             'name': description,
             'product_uom_id': product_uom if product_uom else False,
             'discount': discount,
-            'purchase_line_id': purchase_line_id if purchase_line_id else False  # Add purchase order line ID
-        }))
+            'purchase_line_id': purchase_line_id if purchase_line_id else False,  # Add purchase order line ID
+            'is_landed_costs_line':is_landed_costs_line
+        }
+
+        if related_purchase_order:
+            if related_purchase_order not in po_lines_dict:
+                po_lines_dict[related_purchase_order] = []
+            po_lines_dict[related_purchase_order].append((0, 0, line_data))
+        else:
+            if 'no_po' not in po_lines_dict:
+                po_lines_dict['no_po'] = []
+            po_lines_dict['no_po'].append((0, 0, line_data))
+
+
+    # Construct invoice_line_data with section lines
+    if 'no_po' in po_lines_dict:
+        invoice_line_data.extend(po_lines_dict['no_po'])
+
+    for po_name in po_lines_dict:
+        if po_name != 'no_po':
+            invoice_line_data.append((0, 0, {
+                'display_type': 'line_section',
+                'name': 'From ' + po_name
+            }))
+            invoice_line_data.extend(po_lines_dict[po_name])
+
 
     if res_id:
         am = env['account.move'].browse(res_id)
@@ -132,11 +194,23 @@ if json_response.get('vendor_bill_number', False):
         am.write({'response': vals_response})
         _logger.info('am updated')
     elif supplier_id:
+        invoice_date_date = datetime.datetime.strptime(invoice_date, "%Y-%m-%d")
+        # Sumar un día
+        date = invoice_date_date + datetime.timedelta(days=1)
+
+        # Convertir de nuevo a texto si es necesario
+        date_str = date.strftime("%Y-%m-%d")
+
+        supplier = env["res.partner"].browse(supplier_id)
+        if supplier.parent_id:
+            supplier_id = supplier.parent_id.id
+
         am = env['account.move'].create({
             'partner_id': supplier_id,
             'ref': supplier_referece,
             'invoice_date': invoice_date,
             'invoice_date_due': invoice_due,
+            'date':invoice_date,
             'response': vals_response,
             'narration': notes,
             'move_type': 'in_invoice',
@@ -144,13 +218,46 @@ if json_response.get('vendor_bill_number', False):
         })
         _logger.info('am created')
         am.write({'response': vals_response})
+
+        am._onchange_partner_id()
+        am._compute_invoice_date_due()
+
+        if am.carrier_id:
+            shipping_line = am.invoice_line_ids.filtered(lambda l: l.is_landed_costs_line)
+            for ship_line in shipping_line:
+                if ship_line and not ship_line.product_id:
+                    price_unit = ship_line.price_unit
+                    ship_line.write({'product_id':am.carrier_id.product_id.id})
+                    ship_line.write({'price_unit':price_unit})
+
+        # to compute taxes
+        lines_without_taxes = am.invoice_line_ids.filtered(lambda l: not l.tax_ids and not l.product_id and l.quantity > 0) # Added display_type filter
+
+        lines_with_taxes = am.invoice_line_ids.filtered(lambda l: l.tax_ids and l.quantity > 0) # Added display_type filter
+        if lines_with_taxes:
+            tax_ids = lines_with_taxes[0].tax_ids.ids
+            lines_without_taxes.write({'tax_ids':[(6,0,tax_ids)]})
+        elif am.carrier_id:
+            carrier_product = am.carrier_id.product_id.id
+            for line in lines_without_taxes:
+                price_unit = line.price_unit
+                line.write({'product_id':carrier_product,'price_unit':price_unit})
+                line.write({'product_id':False, 'price_unit':price_unit})
+
+        if is_credit_note:
+            am.write({'to_check':True})
+            am.action_switch_move_type()
+
+
         res_id = am.id
         _logger.info('res_id 2: %s', res_id)
         res_name = am.name
 
+    if am and new_partner:
+        am.write({'to_check':True})
+
 action_response = {'res_id':res_id, 'res_name':res_name}
 action = json.dumps(action_response)
-
 
         </field>
     </record>
