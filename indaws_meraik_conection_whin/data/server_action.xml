@@ -7,6 +7,8 @@
         <field name="state">code</field>
         <field name="code">
 
+
+
 vals_response = env.context.get('vals_response','{}')
 
 res_id = False
@@ -42,14 +44,14 @@ if json_response.get('delivery_note_number', False):
 
     # Procesar cada pedido de compra relacionado
     for purchase_order_number, items in purchase_orders_data.items():
-        purchase_order = self.env['purchase.order'].search([('name', '=', purchase_order_number)], limit=1)
+        purchase_order = env['purchase.order'].search([('name', '=', purchase_order_number)], limit=1)
 
         # Si no hay un pedido de compra, saltamos este grupo
         if not purchase_order:
             continue
 
         # Buscar un albarán existente asociado a este pedido
-        stock_picking = self.env['stock.picking'].search([
+        stock_picking = env['stock.picking'].search([
             ('origin', '=', purchase_order_number),
             ('state', 'not in', ['done', 'cancel'])  # Solo si no está finalizado o cancelado
         ], limit=1)
@@ -65,7 +67,7 @@ if json_response.get('delivery_note_number', False):
             product_uom = item.get('product_uom', False)
 
             if not product_uom:
-                product_uom = self.env['product.product'].browse(product_id).uom_id.id
+                product_uom = env['product.product'].browse(product_id).uom_id.id
 
             # Buscar la línea del pedido de compra correspondiente
             purchase_order_line = purchase_order.order_line.filtered(lambda l: l.product_id.id == product_id)
@@ -73,6 +75,9 @@ if json_response.get('delivery_note_number', False):
             # Determinar locations (se basan en el tipo de picking)
             location_id = stock_picking.location_id.id if stock_picking else purchase_order.picking_type_id.default_location_src_id.id
             location_dest_id = stock_picking.location_dest_id.id if stock_picking else purchase_order.picking_type_id.default_location_dest_id.id
+
+            if not location_id:
+                location_id = env['stock.location'].search([('usage','=','supplier')],limit=1).id
 
             if stock_picking:
                 move = stock_picking.move_ids.filtered(lambda m: m.product_id.id == product_id)
@@ -109,7 +114,7 @@ if json_response.get('delivery_note_number', False):
             stock_picking.write({'note': notes})
         else:
             # ✅ Si no existe un albarán, crearlo con las líneas correspondientes
-            stock_picking = self.env['stock.picking'].create({
+            stock_picking = env['stock.picking'].create({
                 'partner_id': supplier_id,
                 'origin': purchase_order_number,
                 'scheduled_date': receipt_date,
@@ -121,23 +126,11 @@ if json_response.get('delivery_note_number', False):
         stock_picking.write({'response': False})
 
         # Guardar la respuesta en el registro del albarán
-        stock_picking.write({'response': response})
+        stock_picking.write({'response': vals_response})
 
-        # Si hay un documento adjunto, guardarlo
-        if json_response.get('doc_data', False):
-            doc_data = json_response.get('doc_data')
-            attachment_data = {
-                'name': json_response.get('doc_name', 'Attachment'),
-                'type': 'binary',
-                'datas': base64.b64decode(doc_data),
-                'res_model': 'stock.picking',
-                'res_id': stock_picking.id,
-            }
-            self.env['ir.attachment'].create(attachment_data)
 
 action_response = {'res_id':res_id, 'res_name':res_name}
 action = json.dumps(action_response)
-
 
         </field>
     </record>
