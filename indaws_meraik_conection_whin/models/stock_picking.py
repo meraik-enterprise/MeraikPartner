@@ -31,7 +31,7 @@ class StockPicking(models.Model):
                 'name': json_response.get('doc_name', 'Attachment'),
                 'type': 'binary',
                 'datas': base64.b64decode(doc_data),
-                'res_model': 'account.move',
+                'res_model': 'stock.picking',
                 'res_id': res_id,
                 'res_name': res_name,
             }
