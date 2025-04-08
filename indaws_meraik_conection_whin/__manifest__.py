@@ -11,6 +11,7 @@
     "author": "MerAik, Aylen Garces, inDAWS",
     "depends": ["purchase","indaws_meraik_conection_base"],
     "data": [
+        "data/server_action.xml",
     ],
     "installable": True,
     "auto_install": False,

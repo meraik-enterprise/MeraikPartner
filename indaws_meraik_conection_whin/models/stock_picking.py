@@ -1,6 +1,12 @@
+
+from odoo import fields, models, _
 import json
 import base64
-from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
@@ -8,19 +14,48 @@ class StockPicking(models.Model):
     response = fields.Text(string="Response", copy=False)
 
     def process_response(self, vals_response):
-        response = vals_response.get('response', False)
+
+        server_action = self.env.ref('indaws_meraik_conection_whin.action_process_response_stock_picking')
+        response = vals_response.get('response', '{}')
+        move_json_str = server_action.with_context(vals_response=response).run()
         json_response = json.loads(response)
+        _logger.info('move_json')
+        _logger.info(move_json_str)
+        move_json = json.loads(move_json_str)
+        res_id = move_json.get('res_id', False)
+        res_name = move_json.get('res_name', '')
 
-        supplier_id = json_response.get('supplier_id', False)
-        supplier_name = json_response.get('supplier_name', False)
-        delivery_note_number = json_response.get('delivery_note_number', False)
-        receipt_date = json_response.get('receipt_date', False)
-        notes = json_response.get('notes', False)
+        if json_response.get('doc_data', False) and res_id:
+            doc_data = json_response.get('doc_data')
+            attachment_data = {
+                'name': json_response.get('doc_name', 'Attachment'),
+                'type': 'binary',
+                'datas': base64.b64decode(doc_data),
+                'res_model': 'account.move',
+                'res_id': res_id,
+                'res_name': res_name,
+            }
+            self.env['ir.attachment'].create(attachment_data)
 
-        if notes == 'not_found':
-            notes = False
+        if not res_id:
+            raise ValidationError(_("Document not created!"))
 
-        # Agrupar los productos por pedido de compra
+        return res_id
+
+    # def process_response(self, vals_response):
+    #     response = vals_response.get('response', False)
+    #     json_response = json.loads(response)
+    #
+    #     supplier_id = json_response.get('supplier_id', False)
+    #     supplier_name = json_response.get('supplier_name', False)
+    #     delivery_note_number = json_response.get('delivery_note_number', False)
+    #     receipt_date = json_response.get('receipt_date', False)
+    #     notes = json_response.get('notes', False)
+    #
+    #     if notes == 'not_found':
+    #         notes = False
+    #
+    #     # Agrupar los productos por pedido de compra
         purchase_orders_data = {}
         for item in json_response.get('item_list', []):
             purchase_order_number = item.get('related_purchase_order', False)
@@ -119,5 +154,5 @@ class StockPicking(models.Model):
                     'res_id': stock_picking.id,
                 }
                 self.env['ir.attachment'].create(attachment_data)
-
-        return True
+    #
+    #     return True
