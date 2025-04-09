@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_helpdesk_ticket_form_inherit_chat" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.inherit.chat</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form" />
+        <field name="arch" type="xml">
+            <!-- Agregamos los campos después del campo de prioridad -->
+            <xpath expr="//field[@name='priority']" position="after">
+                <field name="x_chat_conversation_id" readonly="1" groups="base.group_no_one" />
+                <field name="x_source" readonly="1" groups="base.group_no_one" />
+            </xpath>
+        </field>
+    </record>
+</odoo>
