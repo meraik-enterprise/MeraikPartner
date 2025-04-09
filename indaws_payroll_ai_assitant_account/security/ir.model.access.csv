@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+indaws_payroll_ai_assitant_account.payroll_ai_account_move,payroll_ai_account_move,indaws_payroll_ai_assitant_account.model_payroll_ai_account_move,base.group_user,1,1,1,1
+indaws_payroll_ai_assitant_account.payroll_ai_account_move_line,payroll_ai_account_move_line,indaws_payroll_ai_assitant_account.model_payroll_ai_account_move_line,base.group_user,1,1,1,1

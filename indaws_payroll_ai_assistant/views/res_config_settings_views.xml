@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.hr.aipayroll</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="hr.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//block[@name='employee_rights_setting_container']" position="after">
+                        <block title="Payroll AI Assistant" name="payroll_ai_setting_container" groups="hr.group_hr_manager">
+                            <setting string="How Many Pages per Employee in attachment" company_dependent="1">
+                                <field name="how_many_pages_per_employee"/>
+                            </setting>
+                            <setting string="Send Mail to Employee">
+                                <field name="send_mail_to_employee"/>
+                                <div class="content-group" invisible="not send_mail_to_employee">
+                                    <div class="content-group mt16">
+                                        <label for="send_mail_planning" string=""/>
+                                        <field name ="send_mail_planning"/>
+                                    </div>
+                                    <div class="content-group" invisible="send_mail_planning == 'ontime'">
+                                        <label for="send_mail_planning_day" string=""/>
+                                        <field name ="send_mail_planning_day"/>
+                                    </div>
+                                </div>
+                            </setting>
+                        </block>
+                        <block title="Payroll AI Remote Server Configurator" name="payroll_ai_setting_remote" groups="base.group_erp_manager">
+                            <setting string="Remote server URL">
+                                <field name="url_remote"/>
+                            </setting>
+                            <setting string="Remote server DB Name">
+                                <field name="db_remote"/>
+                            </setting>
+                            <setting string="User Remote Login" >
+                                <field name="username"/>
+                            </setting>
+                            <setting string="User Remote Password">
+                                <field name="password" password="True"/>
+                            </setting>
+                        </block>
+                </xpath>
+            </field>
+        </record>
+</odoo>

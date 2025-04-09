@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Parámetros para el rango de tiempo de importación -->
+        <record id="chat_import_start_time_hours" model="ir.config_parameter">
+            <field name="key">start_time_hours</field>
+            <field name="value">1</field>
+        </record>
+
+        <record id="chat_import_end_time_hours" model="ir.config_parameter">
+            <field name="key">end_time_hours</field>
+            <field name="value">0</field>
+        </record>
+
+        <record id="chatbot_api_key" model="ir.config_parameter">
+            <field name="key">chatbot_api_key</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="chatbot_id" model="ir.config_parameter">
+            <field name="key">chatbot_id</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="ticket_stage" model="ir.config_parameter">
+            <field name="key">ticket_stage</field>
+            <field name="value">Solved</field>
+        </record>
+
+        <record id="chat_api_url" model="ir.config_parameter">
+            <field name="key">chat_api_url</field>
+            <field name="value">https://api.chat-data.com/api/v2/get-conversations</field>
+        </record>
+    </data>
+</odoo> 

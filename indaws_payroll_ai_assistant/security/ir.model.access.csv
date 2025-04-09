@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+indaws_payroll_ai_assistant.import_payroll,import_payroll,indaws_payroll_ai_assistant.model_import_payroll,base.group_user,1,1,1,1
+indaws_payroll_ai_assistant.payroll_ai_log,payroll_ai_log,indaws_payroll_ai_assistant.model_payroll_ai_log,base.group_user,1,1,1,1
+indaws_payroll_ai_assistant.import_payroll_all_read,import_payroll,indaws_payroll_ai_assistant.model_import_payroll,,1,0,0,0
+indaws_payroll_ai_assistant.payroll_ai_log_all_read,payroll_ai_log,indaws_payroll_ai_assistant.model_payroll_ai_log,,1,0,0,0

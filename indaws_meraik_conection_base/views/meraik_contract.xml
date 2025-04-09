@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- form view: vista principal -->
+        <record model="ir.ui.view" id="meraik_contract_form_view">
+            <field name="name">meraik_contract_form</field>
+            <field name="model">meraik.contract</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="action_test_conection" string="Test Connection"
+                            type="object" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box" invisible="not id">
+                            <button class="oe_stat_button" type="object" name="action_view_request_responses" icon="fa-bars" invisible="not id or not request_qty">
+                                <field string="Requests" name="request_qty" widget="statinfo"/>
+                            </button>
+                        </div>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                             <group>
+                                <field name="remote_id" readonly="state != 'draft'"/>
+                                <field name="model_id" readonly="state != 'draft'"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!--list view -->
+        <record model="ir.ui.view" id="meraik_contract_list_view">
+            <field name="name">meraik_contract_list</field>
+            <field name="model">meraik.contract</field>
+            <field name="arch" type="xml">
+                <list decoration-muted="state == 'cancel'">
+                     <field name="name" readonly="1"/>
+                    <field name="remote_id"/>
+                    <field name="model_id"/>
+                    <field name="state" widget="badge" decoration-muted="state == 'cancel'" decoration-success="state == 'active'" decoration-info="state == 'draft'" decoration-danger="state == 'blocked'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- action list -->
+        <record model="ir.actions.act_window" id="action_meraik_contract">
+              <field name="name">Meraik Contracts</field>
+              <field name="res_model">meraik.contract</field>
+              <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

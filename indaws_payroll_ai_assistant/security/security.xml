@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="model_payroll_ai_log_comp_rule" model="ir.rule">
+        <field name="name">Payroll AI LOG multi-company</field>
+        <field name="model_id" ref="model_payroll_ai_log" />
+        <field name="global" eval="True" />
+        <field
+            name="domain_force"
+        >['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

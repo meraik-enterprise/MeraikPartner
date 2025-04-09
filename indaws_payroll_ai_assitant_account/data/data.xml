@@ -1,0 +1,67 @@
+<odoo>
+    <data noupdate="1">
+        <record model="payroll.ai.account.move" id="data_payroll_ai_account_move">
+            <field name="name">Payroll AI Account Move</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_1">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">CUOTA S.S EMPRESA</field>
+            <field name="json_key">cuota_ss_empresa</field>
+            <field name="extra_info">Devolver float. Buscar al principio de la imagen en seccion DEVENGOS / Observaciones.</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_2">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">CUOTA S.S</field>
+            <field name="json_key">cuota_ss</field>
+            <field name="debit_expression">account_id_ss</field>
+            <field name="extra_info">Devolver float. Buscar al principio de la imagen en seccion DEVENGOS / Observaciones es igual a CUOTA S.S EMPRESA</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_3">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">LIQUIDO TOTAL A PERCIBIR</field>
+            <field name="json_key">liquido_total</field>
+            <field name="credit_expression">account_id_rem_pendiente</field>
+            <field name="extra_info">Devolver float.</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_4">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">Valor de productos recibidos en especie</field>
+            <field name="json_key">seguro_convenio</field>
+            <field name="extra_info">Devolver float.</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_5">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">TOTAL APORTACIONES</field>
+            <field name="json_key">total_aportaciones</field>
+            <field name="extra_info">Devolver float. Aparece en la seccion de DEDUCCIONES, en la columna derecha de TOTAL APORTACIONES, Puede que no este presente el valor por bajas medicas o maternidad, devuelve cero en estos casos</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_6">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">TOTAL DEVENGADO</field>
+            <field name="json_key">total_devengado</field>
+            <field name="debit_expression">account_id_total_devengado</field>
+            <field name="extra_info">Devolver float. Aparece en la nomina como A. TOTAL DEVENGADO, y puede que no tenga valor debido a bajas medicas o maternidad, devuelve cero en estos casos</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_7">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">Impuesto sobre la renta de personas fisicas</field>
+            <field name="json_key">impuesto_sobrerenta_pers_fisicas</field>
+            <field name="extra_info">Puede que no aparezca el valor, si aparece, esta debajo del valor de "A. TOTAL DEVENGADO", por favor, NO BUSCAR EN DEDUCCIONES, NI TAMPOCO EN Aportacion Empresarial o ninguna otra seccion</field>
+        </record>
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_8">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">RETENCION EMBARGO</field>
+            <field name="json_key">retencion_embargo</field>
+            <field name="extra_info">Devolver float. En ocasiones aparece debajo de Otras deducciones, pero puede que no este presente en la nomina</field>
+        </record>
+
+        <record model="payroll.ai.account.move.line" id="data_payroll_ai_account_move_line_9">
+            <field name="payroll_ai_account_move_id" ref="data_payroll_ai_account_move"/>
+            <field name="name">ANTICIPOS</field>
+            <field name="json_key">anticipos</field>
+            <field name="credit_expression">account_id_anticipo</field>
+            <field name="extra_info">Devolver float.</field>
+        </record>
+
+    </data>
+</odoo>

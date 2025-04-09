@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_view_form" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit.payroll.ai.log</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="indaws_payroll_ai_assistant.hr_employee_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='payroll_ai_account_setting']//field[@name='extra_info']" position="before">
+                        <field name="account_id_total_devengado" options="{'no_create': True}"/>
+                        <field name="account_id_rem_pendiente" options="{'no_create': True}"/>
+                        <field name="account_id_ss" options="{'no_create': True}"/>
+                        <field name="account_id_ret_embargo" options="{'no_create': True}"/>
+                        <field name="account_id_anticipo" options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
