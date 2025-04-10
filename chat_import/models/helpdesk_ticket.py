@@ -216,46 +216,57 @@ class HelpdeskTicket(models.Model):
                     return existing_ticket
                 return existing_ticket
             return existing_ticket
-
-        # Si no existe, crear nuevo ticket
-        description = ""
-        for i, message in enumerate(messages):
-            description += self._format_message(message, is_first=(i == 0))
-
-        # Obtener el equipo de helpdesk
-        team = self.env['helpdesk.team'].search([], limit=1)
-        if not team:
-            _logger.error("No se encontró ningún equipo de helpdesk")
-            return False
-
-        # Convertir createdAt (que viene en milisegundos) a datetime
-        created_at_ms = conversation.get('createdAt', 0)
-        if not created_at_ms:
-            _logger.warning(
-                f"Conversación {conversation_id} sin fecha de creación")
-            created_at = datetime.now()
         else:
-            created_at = datetime.fromtimestamp(
-                created_at_ms / 1000.0)  # Sin UTC
+            # Si no existe, crear nuevo ticket
+            try:
+                description = ""
+                for i, message in enumerate(messages):
+                    description += self._format_message(
+                        message, is_first=(i == 0))
 
-        # Crear el ticket
-        ticket_values = {
-            'name': f"Conversación {conversation_id[-8:]}",
-            'description': description,
-            'x_chat_conversation_id': conversation_id,
-            'create_date': created_at,
-            'team_id': team.id,
-            'x_last_message_timestamp': self._get_last_message_timestamp(messages),
-            'stage_id': ticket_stage.id,
-            'x_source': 'cron'
-        }
+                # Obtener el equipo de helpdesk
+                team = self.env['helpdesk.team'].search([], limit=1)
+                if not team:
+                    _logger.error("No se encontró ningún equipo de helpdesk")
+                    return False
 
-        try:
-            new_ticket = self.create(ticket_values)
-            return new_ticket
-        except Exception as e:
-            _logger.error(f"Error al crear el ticket: {str(e)}")
-            return False
+                _logger.info(f"Equipo de helpdesk encontrado: {team.id}")
+
+                # Convertir createdAt (que viene en milisegundos) a datetime
+                created_at_ms = conversation.get('createdAt', 0)
+                if not created_at_ms:
+                    _logger.warning(
+                        f"Conversación {conversation_id} sin fecha de creación")
+                    created_at = datetime.now()
+                else:
+                    created_at = datetime.fromtimestamp(
+                        created_at_ms / 1000.0)  # Sin UTC
+
+                _logger.info(f"Fecha de creación del ticket: {created_at}")
+
+                # Crear el ticket
+                ticket_values = {
+                    'name': f"Conversación {conversation_id[-8:]}",
+                    'description': description,
+                    'x_chat_conversation_id': conversation_id,
+                    'create_date': created_at,
+                    'team_id': team.id,
+                    'x_last_message_timestamp': self._get_last_message_timestamp(messages),
+                    'stage_id': ticket_stage.id,
+                    'x_source': 'cron'
+                }
+
+                _logger.info(
+                    f"Valores del ticket a crear: {json.dumps(ticket_values, default=str)}")
+
+                new_ticket = self.create(ticket_values)
+                _logger.info(
+                    f"Ticket creado exitosamente con ID: {new_ticket.id}")
+                return new_ticket
+            except Exception as e:
+                _logger.error(
+                    f"Error al crear el ticket: {str(e)}", exc_info=True)
+                return False
 
     def _import_chat(self):
         """Importa conversaciones desde Chat."""
