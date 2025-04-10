@@ -41,12 +41,19 @@ class HelpdeskTicket(models.Model):
     def _format_message(self, message, is_first=False):
         """Formatea un mensaje individual para la descripción del ticket."""
         try:
-            # El timestamp viene como string ISO 8601
-            timestamp = parse(message.get('timestamp'))
-            # Convertir a la zona horaria del usuario
-            user_tz = pytz.timezone(self.env.user.tz or 'UTC')
-            local_timestamp = timestamp.astimezone(user_tz)
-            formatted_time = local_timestamp.strftime('%d/%m/%Y %H:%M')
+            # Verificar si el mensaje tiene timestamp
+            timestamp_str = message.get('timestamp')
+            if not timestamp_str:
+                _logger.warning(f"Mensaje sin timestamp: {message}")
+                formatted_time = "Sin fecha"
+            else:
+                # El timestamp viene como string ISO 8601
+                timestamp = parse(timestamp_str)
+                # Convertir a la zona horaria del usuario
+                user_tz = pytz.timezone(self.env.user.tz or 'UTC')
+                local_timestamp = timestamp.astimezone(user_tz)
+                formatted_time = local_timestamp.strftime('%d/%m/%Y %H:%M')
+
             role = message.get('role', 'unknown')
             content = message.get('content', '')
 
@@ -74,8 +81,12 @@ class HelpdeskTicket(models.Model):
             return None
         try:
             last_message = messages[-1]
+            timestamp_str = last_message.get('timestamp')
+            if not timestamp_str:
+                _logger.warning("Último mensaje sin timestamp")
+                return None
             # Convertir a datetime sin zona horaria
-            timestamp = parse(last_message.get('timestamp'))
+            timestamp = parse(timestamp_str)
             return timestamp.replace(tzinfo=None)
         except Exception as e:
             _logger.error(f"Error obteniendo último timestamp: {str(e)}")
@@ -83,10 +94,17 @@ class HelpdeskTicket(models.Model):
 
     def _create_ticket_from_conversation(self, conversation):
         """Crea o actualiza un ticket a partir de una conversación."""
+        _logger.info("Iniciando creación/actualización de ticket")
         conversation_id = conversation.get('conversationId')
+        _logger.info(f"ID de conversación: {conversation_id}")
+
+        if not conversation_id:
+            _logger.error("Conversación sin ID")
+            return False
 
         # Obtener el nombre del stage desde la configuración
         _, _, _, _, _, ticket_stage_name = self._get_chat_config()
+        _logger.info(f"Stage configurado: {ticket_stage_name}")
 
         # Buscar el stage configurado
         ticket_stage = self.env['helpdesk.stage'].search(
@@ -100,24 +118,57 @@ class HelpdeskTicket(models.Model):
             ('x_chat_conversation_id', '=', conversation_id)
         ], limit=1)
 
+        if existing_ticket:
+            _logger.info(f"Ticket existente encontrado: {existing_ticket.id}")
+        else:
+            _logger.info("No se encontró ticket existente, creando uno nuevo")
+
         messages = conversation.get('messages', [])
+        _logger.info(f"Número de mensajes en la conversación: {len(messages)}")
+
+        if not messages:
+            _logger.warning(f"Conversación {conversation_id} sin mensajes")
+            return False
+
+        # Log de los primeros 3 mensajes para debugging
+        for i, msg in enumerate(messages[:3]):
+            _logger.info(f"Mensaje {i+1}: {json.dumps(msg, indent=2)}")
 
         if existing_ticket:
             if existing_ticket.x_last_message_timestamp:
+                _logger.info(
+                    f"Último timestamp procesado: {existing_ticket.x_last_message_timestamp}")
                 new_messages = []
                 last_saved_timestamp = existing_ticket.x_last_message_timestamp
 
                 for message in messages:
                     try:
-                        message_timestamp = parse(message.get(
-                            'timestamp')).replace(tzinfo=None)
+                        timestamp_str = message.get('timestamp')
+                        _logger.debug(
+                            f"Procesando mensaje con timestamp: {timestamp_str}")
+
+                        if not timestamp_str:
+                            _logger.warning(
+                                f"Mensaje sin timestamp en conversación {conversation_id}")
+                            continue
+
+                        message_timestamp = parse(
+                            timestamp_str).replace(tzinfo=None)
+                        _logger.debug(
+                            f"Timestamp parseado: {message_timestamp}")
 
                         if message_timestamp > last_saved_timestamp:
+                            _logger.info(
+                                f"Nuevo mensaje encontrado: {message_timestamp}")
                             new_messages.append(message)
                     except Exception as e:
                         _logger.error(
-                            f"Error procesando timestamp del mensaje: {str(e)}")
+                            f"Error procesando timestamp del mensaje: {str(e)}", exc_info=True)
                         continue
+
+                _logger.info(
+                    f"Se encontraron {len(new_messages)} mensajes nuevos")
+
                 if new_messages:
                     all_messages = []
                     current_description = existing_ticket.description or ""
@@ -125,8 +176,14 @@ class HelpdeskTicket(models.Model):
                     # Obtener todos los mensajes antiguos
                     for message in messages:
                         try:
-                            message_timestamp = parse(message.get(
-                                'timestamp')).replace(tzinfo=None)
+                            timestamp_str = message.get('timestamp')
+                            if not timestamp_str:
+                                _logger.warning(
+                                    f"Mensaje sin timestamp en conversación {conversation_id}")
+                                continue
+
+                            message_timestamp = parse(
+                                timestamp_str).replace(tzinfo=None)
                             if message_timestamp <= last_saved_timestamp:
                                 all_messages.append(message)
                         except Exception as e:
@@ -138,7 +195,12 @@ class HelpdeskTicket(models.Model):
                     all_messages.extend(new_messages)
 
                     # Ordenar todos los mensajes por timestamp
-                    all_messages.sort(key=lambda x: parse(x.get('timestamp')))
+                    try:
+                        all_messages.sort(key=lambda x: parse(
+                            x.get('timestamp')) if x.get('timestamp') else datetime.min)
+                    except Exception as e:
+                        _logger.error(f"Error ordenando mensajes: {str(e)}")
+                        return existing_ticket
 
                     # Reformatear toda la descripción
                     new_description = ""
@@ -168,7 +230,13 @@ class HelpdeskTicket(models.Model):
 
         # Convertir createdAt (que viene en milisegundos) a datetime
         created_at_ms = conversation.get('createdAt', 0)
-        created_at = datetime.fromtimestamp(created_at_ms / 1000.0)  # Sin UTC
+        if not created_at_ms:
+            _logger.warning(
+                f"Conversación {conversation_id} sin fecha de creación")
+            created_at = datetime.now()
+        else:
+            created_at = datetime.fromtimestamp(
+                created_at_ms / 1000.0)  # Sin UTC
 
         # Crear el ticket
         ticket_values = {
@@ -192,15 +260,24 @@ class HelpdeskTicket(models.Model):
     def _import_chat(self):
         """Importa conversaciones desde Chat."""
         try:
+            _logger.info("Iniciando importación de conversaciones")
             api_key, chatbot_id, start_time_hours, end_time_hours, base_url, ticket_stage_name = self._get_chat_config()
             if not api_key or not chatbot_id:
                 _logger.error("Falta configuración de API Key o Chatbot ID")
                 return
 
+            _logger.info(
+                f"Configuración obtenida - API Key: {'*'*len(api_key)}, Chatbot ID: {chatbot_id}")
+            _logger.info(
+                f"Rango de tiempo: {start_time_hours}h hasta {end_time_hours}h")
+
             # Obtener el timestamp actual en UTC
             end_time = datetime.now(pytz.UTC)
             start_time = end_time - timedelta(hours=start_time_hours)
             end_time = end_time - timedelta(hours=end_time_hours)
+
+            _logger.info(
+                f"Buscando conversaciones entre {start_time} y {end_time}")
 
             # Construir la URL de la API
             url = f"{base_url}/{chatbot_id}"
@@ -209,6 +286,9 @@ class HelpdeskTicket(models.Model):
                 'endTimestamp': int(end_time.timestamp() * 1000)
             }
 
+            _logger.info(f"URL de la API: {url}")
+            _logger.info(f"Parámetros: {params}")
+
             # Realizar la petición a la API
             headers = {
                 "Authorization": f"Bearer {api_key}",
@@ -216,22 +296,34 @@ class HelpdeskTicket(models.Model):
             }
             response = requests.get(url, headers=headers, params=params)
 
+            _logger.info(
+                f"Respuesta de la API - Status Code: {response.status_code}")
+
             if response.status_code == 200:
                 data = response.json()
+                _logger.info(
+                    f"Respuesta de la API - Data: {json.dumps(data, indent=2)}")
+
                 if data.get('status') != 'success':
-                    _logger.error(
-                        f"Error en la respuesta de Chat: {data}")
+                    _logger.error(f"Error en la respuesta de Chat: {data}")
                     return
 
                 conversations = data.get('conversations', [])
-                for conversation in conversations:
+                _logger.info(
+                    f"Se encontraron {len(conversations)} conversaciones")
+
+                for idx, conversation in enumerate(conversations, 1):
+                    _logger.info(
+                        f"Procesando conversación {idx}/{len(conversations)}")
+                    _logger.info(
+                        f"Detalles de la conversación: {json.dumps(conversation, indent=2)}")
                     self._create_ticket_from_conversation(conversation)
             else:
                 _logger.error(
                     f"Error al obtener conversaciones: {response.status_code} - {response.text}")
 
         except Exception as e:
-            _logger.error(f"Error en la importación: {str(e)}")
+            _logger.error(f"Error en la importación: {str(e)}", exc_info=True)
 
     @api.model
     def _cron_import_chat(self):
