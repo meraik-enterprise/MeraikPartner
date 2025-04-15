@@ -230,6 +230,8 @@ class HelpdeskTicket(models.Model):
                 }
 
                 new_ticket = self.create(ticket_values)
+                # Asignar el company_id 1 después de crear el ticket
+                new_ticket.write({'company_id': 1})
                 return new_ticket
             except Exception as e:
                 _logger.error(
