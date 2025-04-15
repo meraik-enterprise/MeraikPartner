@@ -49,10 +49,12 @@ class HelpdeskTicket(models.Model):
             else:
                 # El timestamp viene como string ISO 8601
                 timestamp = parse(timestamp_str)
-                # Convertir a la zona horaria del usuario
-                user_tz = pytz.timezone(self.env.user.tz or 'UTC')
-                local_timestamp = timestamp.astimezone(user_tz)
-                formatted_time = local_timestamp.strftime('%d/%m/%Y %H:%M')
+                # Convertir a la zona horaria de España
+                spain_tz = pytz.timezone('Europe/Madrid')
+                message_timestamp = timestamp.astimezone(spain_tz)
+                # Convertir a naive datetime para comparación
+                message_timestamp = message_timestamp.replace(tzinfo=None)
+                formatted_time = message_timestamp.strftime('%d/%m/%Y %H:%M')
 
             role = message.get('role', 'unknown')
             content = message.get('content', '')
@@ -87,7 +89,12 @@ class HelpdeskTicket(models.Model):
                 return None
             # Convertir a datetime sin zona horaria
             timestamp = parse(timestamp_str)
-            return timestamp.replace(tzinfo=None)
+            # Convertir a la zona horaria de España
+            spain_tz = pytz.timezone('Europe/Madrid')
+            message_timestamp = timestamp.astimezone(spain_tz)
+            # Convertir a naive datetime para comparación
+            message_timestamp = message_timestamp.replace(tzinfo=None)
+            return message_timestamp
         except Exception as e:
             _logger.error(f"Error obteniendo último timestamp: {str(e)}")
             return None
@@ -135,8 +142,14 @@ class HelpdeskTicket(models.Model):
                                 f"Mensaje sin timestamp en conversación {conversation_id}")
                             continue
 
-                        message_timestamp = parse(
-                            timestamp_str).replace(tzinfo=None)
+                        message_timestamp = parse(timestamp_str)
+                        # Convertir a la zona horaria de España
+                        spain_tz = pytz.timezone('Europe/Madrid')
+                        message_timestamp = message_timestamp.astimezone(
+                            spain_tz)
+                        # Convertir a naive datetime para comparación
+                        message_timestamp = message_timestamp.replace(
+                            tzinfo=None)
 
                         if message_timestamp > last_saved_timestamp:
                             new_messages.append(message)
@@ -158,8 +171,14 @@ class HelpdeskTicket(models.Model):
                                     f"Mensaje sin timestamp en conversación {conversation_id}")
                                 continue
 
-                            message_timestamp = parse(
-                                timestamp_str).replace(tzinfo=None)
+                            message_timestamp = parse(timestamp_str)
+                            # Convertir a la zona horaria de España
+                            spain_tz = pytz.timezone('Europe/Madrid')
+                            message_timestamp = message_timestamp.astimezone(
+                                spain_tz)
+                            # Convertir a naive datetime para comparación
+                            message_timestamp = message_timestamp.replace(
+                                tzinfo=None)
                             if message_timestamp <= last_saved_timestamp:
                                 all_messages.append(message)
                         except Exception as e:
@@ -213,8 +232,16 @@ class HelpdeskTicket(models.Model):
                         f"Conversación {conversation_id} sin fecha de creación")
                     created_at = datetime.now()
                 else:
+                    # Convertir a datetime con UTC
                     created_at = datetime.fromtimestamp(
-                        created_at_ms / 1000.0)  # Sin UTC
+                        created_at_ms / 1000.0, pytz.UTC)
+                    # Convertir a la zona horaria de España
+                    spain_tz = pytz.timezone('Europe/Madrid')
+                    created_at = created_at.astimezone(spain_tz)
+                    # Convertir a naive datetime para almacenamiento
+                    created_at = created_at.replace(tzinfo=None)
+
+                _logger.info(f"Fecha de creación del ticket: {created_at}")
 
                 # Crear el ticket
                 ticket_values = {
