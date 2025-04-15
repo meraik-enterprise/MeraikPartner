@@ -94,9 +94,7 @@ class HelpdeskTicket(models.Model):
 
     def _create_ticket_from_conversation(self, conversation):
         """Crea o actualiza un ticket a partir de una conversación."""
-        _logger.info("Iniciando creación/actualización de ticket")
         conversation_id = conversation.get('conversationId')
-        _logger.info(f"ID de conversación: {conversation_id}")
 
         if not conversation_id:
             _logger.error("Conversación sin ID")
@@ -104,7 +102,6 @@ class HelpdeskTicket(models.Model):
 
         # Obtener el nombre del stage desde la configuración
         _, _, _, _, _, ticket_stage_name = self._get_chat_config()
-        _logger.info(f"Stage configurado: {ticket_stage_name}")
 
         # Buscar el stage configurado
         ticket_stage = self.env['helpdesk.stage'].search(
@@ -118,34 +115,20 @@ class HelpdeskTicket(models.Model):
             ('x_chat_conversation_id', '=', conversation_id)
         ], limit=1)
 
-        if existing_ticket:
-            _logger.info(f"Ticket existente encontrado: {existing_ticket.id}")
-        else:
-            _logger.info("No se encontró ticket existente, creando uno nuevo")
-
         messages = conversation.get('messages', [])
-        _logger.info(f"Número de mensajes en la conversación: {len(messages)}")
 
         if not messages:
             _logger.warning(f"Conversación {conversation_id} sin mensajes")
             return False
 
-        # Log de los primeros 3 mensajes para debugging
-        for i, msg in enumerate(messages[:3]):
-            _logger.info(f"Mensaje {i+1}: {json.dumps(msg, indent=2)}")
-
         if existing_ticket:
             if existing_ticket.x_last_message_timestamp:
-                _logger.info(
-                    f"Último timestamp procesado: {existing_ticket.x_last_message_timestamp}")
                 new_messages = []
                 last_saved_timestamp = existing_ticket.x_last_message_timestamp
 
                 for message in messages:
                     try:
                         timestamp_str = message.get('timestamp')
-                        _logger.debug(
-                            f"Procesando mensaje con timestamp: {timestamp_str}")
 
                         if not timestamp_str:
                             _logger.warning(
@@ -154,20 +137,13 @@ class HelpdeskTicket(models.Model):
 
                         message_timestamp = parse(
                             timestamp_str).replace(tzinfo=None)
-                        _logger.debug(
-                            f"Timestamp parseado: {message_timestamp}")
 
                         if message_timestamp > last_saved_timestamp:
-                            _logger.info(
-                                f"Nuevo mensaje encontrado: {message_timestamp}")
                             new_messages.append(message)
                     except Exception as e:
                         _logger.error(
                             f"Error procesando timestamp del mensaje: {str(e)}", exc_info=True)
                         continue
-
-                _logger.info(
-                    f"Se encontraron {len(new_messages)} mensajes nuevos")
 
                 if new_messages:
                     all_messages = []
@@ -230,8 +206,6 @@ class HelpdeskTicket(models.Model):
                     _logger.error("No se encontró ningún equipo de helpdesk")
                     return False
 
-                _logger.info(f"Equipo de helpdesk encontrado: {team.id}")
-
                 # Convertir createdAt (que viene en milisegundos) a datetime
                 created_at_ms = conversation.get('createdAt', 0)
                 if not created_at_ms:
@@ -242,8 +216,6 @@ class HelpdeskTicket(models.Model):
                     created_at = datetime.fromtimestamp(
                         created_at_ms / 1000.0)  # Sin UTC
 
-                _logger.info(f"Fecha de creación del ticket: {created_at}")
-
                 # Crear el ticket
                 ticket_values = {
                     'name': f"Conversación {conversation_id[-8:]}",
@@ -253,15 +225,11 @@ class HelpdeskTicket(models.Model):
                     'team_id': team.id,
                     'x_last_message_timestamp': self._get_last_message_timestamp(messages),
                     'stage_id': ticket_stage.id,
-                    'x_source': 'cron'
+                    'x_source': 'cron',
+                    'company_id': 1
                 }
 
-                _logger.info(
-                    f"Valores del ticket a crear: {json.dumps(ticket_values, default=str)}")
-
                 new_ticket = self.create(ticket_values)
-                _logger.info(
-                    f"Ticket creado exitosamente con ID: {new_ticket.id}")
                 return new_ticket
             except Exception as e:
                 _logger.error(
@@ -271,63 +239,34 @@ class HelpdeskTicket(models.Model):
     def _import_chat(self):
         """Importa conversaciones desde Chat."""
         try:
-            _logger.info("Iniciando importación de conversaciones")
             api_key, chatbot_id, start_time_hours, end_time_hours, base_url, ticket_stage_name = self._get_chat_config()
             if not api_key or not chatbot_id:
                 _logger.error("Falta configuración de API Key o Chatbot ID")
                 return
 
-            _logger.info(
-                f"Configuración obtenida - API Key: {'*'*len(api_key)}, Chatbot ID: {chatbot_id}")
-            _logger.info(
-                f"Rango de tiempo: {start_time_hours}h hasta {end_time_hours}h")
-
-            # Obtener el timestamp actual en UTC
             end_time = datetime.now(pytz.UTC)
             start_time = end_time - timedelta(hours=start_time_hours)
             end_time = end_time - timedelta(hours=end_time_hours)
 
-            _logger.info(
-                f"Buscando conversaciones entre {start_time} y {end_time}")
-
-            # Construir la URL de la API
             url = f"{base_url}/{chatbot_id}"
             params = {
                 'startTimestamp': int(start_time.timestamp() * 1000),
                 'endTimestamp': int(end_time.timestamp() * 1000)
             }
 
-            _logger.info(f"URL de la API: {url}")
-            _logger.info(f"Parámetros: {params}")
-
-            # Realizar la petición a la API
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            response = requests.get(url, headers=headers, params=params)
-
-            _logger.info(
-                f"Respuesta de la API - Status Code: {response.status_code}")
+            response = requests.get(url, headers={
+                                    "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, params=params)
 
             if response.status_code == 200:
                 data = response.json()
-                _logger.info(
-                    f"Respuesta de la API - Data: {json.dumps(data, indent=2)}")
 
                 if data.get('status') != 'success':
                     _logger.error(f"Error en la respuesta de Chat: {data}")
                     return
 
                 conversations = data.get('conversations', [])
-                _logger.info(
-                    f"Se encontraron {len(conversations)} conversaciones")
 
                 for idx, conversation in enumerate(conversations, 1):
-                    _logger.info(
-                        f"Procesando conversación {idx}/{len(conversations)}")
-                    _logger.info(
-                        f"Detalles de la conversación: {json.dumps(conversation, indent=2)}")
                     self._create_ticket_from_conversation(conversation)
             else:
                 _logger.error(
