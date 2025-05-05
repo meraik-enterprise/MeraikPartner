@@ -3,6 +3,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, _
+import json
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -107,6 +108,7 @@ class MeraikRequestResponse(models.Model):
                 vals_response['response'] = record.response_json
                 vals_response['state'] = record.state
                 document = self.env[record.model_id.model].search([('id', '=', record.res_id)])
+                res_ids = False
                 if document:
                     document.process_response(vals_response)
                 else:
@@ -119,11 +121,35 @@ class MeraikRequestResponse(models.Model):
                         record.write({'res_ids': ','.join(map(str, res_ids))})
                 if record.state == 'error_doc_processing':
                     record.with_context(process_document=False).write({'state': 'success'})
+                if not res_ids and not record.res_id:
+                    record.message_post(body=_('Error processing document: %s') % str(e))
+                    record.write({'state': 'error_doc_processing'})
             except Exception as e:
                 record.message_post(body=_('Error processing document: %s') % str(e))
                 record.write({'state': 'error_doc_processing'})
                 record.send_feedback_to_platform(str(e))
         return False
+
+    def create_attachment(self):
+        response = self.response_json
+        try:
+            response = json.loads(response)
+            doc_data = response.get('doc_data', False)
+            doc_name = response.get('doc_name', 'Attachment')
+            if doc_data:
+                attachment_data = {
+                    'name': doc_name,
+                    'type': 'binary',
+                    'datas': doc_data,
+                    'res_model': 'meraik.request.response',
+                    'res_id': self.id,
+                    'res_name': str(self.id),
+                }
+                self.env['ir.attachment'].create(attachment_data)
+        except Exception as e:
+            _logger.error('Error creating attachment: %s', str(e))
+            self.message_post(body=_('Error creating attachment: %s') % str(e))
+            return False
 
     def send_feedback_to_platform(self, message_error):
         for record in self:
