@@ -70,8 +70,6 @@ class MeraikRequestResponse(models.Model):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         res = super(MeraikRequestResponse, self).create(vals)
-        _logger.info('CREATE LOG state: %s, process_document: %s', vals.get('state', 'null'),
-                     self.env.context.get('process_document', 'null'))
         if res.state == 'success' and self.env.context.get('process_document', False):
             res.process_document()
         return res
