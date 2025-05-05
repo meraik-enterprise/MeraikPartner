@@ -55,7 +55,7 @@ class StockPicking(models.Model):
                 iterator += 1
 
         if not res_id and not len(res_ids):
-            raise ValidationError(_("Document not created!"))
+            raise ValidationError(_("Document not found!"))
 
         return res_id if res_id else res_ids
 

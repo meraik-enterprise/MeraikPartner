@@ -4,6 +4,7 @@
 
 from odoo import api, fields, models, _
 import json
+import base64
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ class MeraikRequestResponse(models.Model):
                 attachment_data = {
                     'name': doc_name,
                     'type': 'binary',
-                    'datas': doc_data,
+                    'datas': base64.b64decode(doc_data),
                     'res_model': 'meraik.request.response',
                     'res_id': self.id,
                     'res_name': str(self.id),
