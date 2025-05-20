@@ -16,7 +16,7 @@
         "views/meraik_request_response.xml",
         "views/res_config_settings_views.xml",
         "views/menu.xml",
-        # "data/base_automation.xml",
+        "data/base_automation.xml",
     ],
     "installable": True,
     "auto_install": False,
