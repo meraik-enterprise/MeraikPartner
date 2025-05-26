@@ -89,16 +89,19 @@ class MeraikRequestResponse(models.Model):
                 'type': 'ir.actions.act_window',
             }
         elif self.model_id and self.res_ids:
-            document = self.env[self.model_id.model].search([('id', 'in', self.res_ids.split(','))])
-            if not document:
-                self.res_ids = False
-                return False
-            return {
-                'view_mode': 'tree,form',
-                'res_model': self.model_id.model,
-                'domain': [('id', 'in', self.res_ids.split(','))],
-                'type': 'ir.actions.act_window',
-            }
+            try:
+                document = self.env[self.model_id.model].search([('id', 'in', self.res_ids.split(','))])
+                if not document:
+                    self.res_ids = False
+                    return False
+                return {
+                    'view_mode': 'tree,form',
+                    'res_model': self.model_id.model,
+                    'domain': [('id', 'in', self.res_ids.split(','))],
+                    'type': 'ir.actions.act_window',
+                }
+            except:
+                pass
 
     def process_document(self):
         for record in self:
