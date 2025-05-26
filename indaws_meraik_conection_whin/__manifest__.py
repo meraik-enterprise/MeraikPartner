@@ -9,7 +9,7 @@
     "license": "AGPL-3",
     "website": "https://www.indaws.es/",
     "author": "MerAik, Aylen Garces, inDAWS",
-    "depends": ["purchase","indaws_meraik_conection_base"],
+    "depends": ["stock","indaws_meraik_conection_base"],
     "data": [
         "data/server_action.xml",
     ],
