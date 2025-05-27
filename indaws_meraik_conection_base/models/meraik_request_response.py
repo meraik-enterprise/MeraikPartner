@@ -63,7 +63,6 @@ class MeraikRequestResponse(models.Model):
         _logger.info('WRITE LOG: state: %s, process_document: %s', vals.get('state','null'), self.env.context.get('process_document', 'null'))
         if 'state' in vals and vals['state'] == 'success' and self.env.context.get('process_document', False):
             self.process_document()
-
         return res
 
     def create(self, vals):

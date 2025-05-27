@@ -12,6 +12,7 @@
     "depends": ["stock","indaws_meraik_conection_base"],
     "data": [
         "data/server_action.xml",
+        "views/stock_picking_view.xml",
     ],
     "installable": True,
     "auto_install": False,
