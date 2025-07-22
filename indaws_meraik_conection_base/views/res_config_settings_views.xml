@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.meraik.base</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="50"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="Meraik" string="Meraik" data-key="meraik">
+                        <div class="row mt16 o_settings_container">
+                            <div id="meraik_db_configurator" class="col-md-12 col-lg-12 o_setting_box">
+                                <h2>Meraik DB Configurator</h2>
+                                <div class="text-muted mb8">
+                                    Configura la conexión con el servidor remoto de Meraik.
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <!-- Remote server URL -->
+                                        <div class="mt16 row o_setting_line">
+                                            <label for="url_remote" class="col-4 col-lg-4 o_light_label"
+                                                   string="Remote server URL"/>
+                                            <field name="url_remote" class="col-8 col-lg-8"/>
+                                        </div>
+                                        <!-- Remote server DB Name -->
+                                        <div class="mt16 row o_setting_line">
+                                            <label for="db_remote" class="col-4 col-lg-4 o_light_label"
+                                                   string="Remote server DB Name"/>
+                                            <field name="db_remote" class="col-8 col-lg-8"/>
+                                        </div>
+                                        <!-- User Remote Login -->
+                                        <div class="mt16 row o_setting_line">
+                                            <label for="username" class="col-4 col-lg-4 o_light_label"
+                                                   string="User Remote Login"/>
+                                            <field name="username" class="col-8 col-lg-8"/>
+                                        </div>
+                                        <!-- User Remote Password -->
+                                        <div class="mt16 row o_setting_line">
+                                            <label for="password" class="col-4 col-lg-4 o_light_label"
+                                                   string="User Remote Password"/>
+                                            <field name="password" password="True" class="col-8 col-lg-8"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+</odoo>

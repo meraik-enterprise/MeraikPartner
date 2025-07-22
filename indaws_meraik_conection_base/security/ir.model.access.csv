@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_meraik_contract_admin,meraik.contract.admin.access,model_meraik_contract,,1,1,1,1
+access_request_response,meraik.request.response.access,model_meraik_request_response,,1,1,1,1
