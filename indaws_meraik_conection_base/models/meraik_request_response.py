@@ -3,6 +3,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, _
+import json
+import base64
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -11,6 +13,7 @@ class MeraikRequestResponse(models.Model):
     _name = 'meraik.request.response'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Meraik Request Response'
+    _order = 'create_date desc'
 
     contract_id = fields.Many2one('meraik.contract', string='Contract', ondelete='cascade', required=True, tracking=True)
     request_remote_id = fields.Integer(string='Request Remote ID', copy=False, tracking=True)
@@ -21,6 +24,7 @@ class MeraikRequestResponse(models.Model):
         string="State", default='pending', tracking=True, copy=False)
     model_id = fields.Many2one('ir.model', string='Model Related', related='contract_id.model_id', store=True)
     res_id = fields.Integer(string='Record ID', copy=False, tracking=True)
+    res_ids = fields.Char(string='Record IDs', copy=False, tracking=True)
 
     def check_result(self):
         try:
@@ -59,32 +63,42 @@ class MeraikRequestResponse(models.Model):
         _logger.info('WRITE LOG: state: %s, process_document: %s', vals.get('state','null'), self.env.context.get('process_document', 'null'))
         if 'state' in vals and vals['state'] == 'success' and self.env.context.get('process_document', False):
             self.process_document()
+
         return res
 
     def create(self, vals):
         if 'state' in vals and vals['state'] != 'pending' and not vals.get('response_date'):
             vals['response_date'] = str(fields.Datetime.now())
         res = super(MeraikRequestResponse, self).create(vals)
-        _logger.info('CREATE LOG state: %s, process_document: %s', vals.get('state', 'null'),
-                     self.env.context.get('process_document', 'null'))
         if res.state == 'success' and self.env.context.get('process_document', False):
             res.process_document()
         return res
 
     def open_document(self):
-        if not self.model_id or not self.res_id:
+        if not self.model_id or (not self.res_id and not self.res_ids):
             return False
         elif self.model_id and self.res_id:
             document = self.env[self.model_id.model].search([('id', '=', self.res_id)])
             if not document:
                 self.res_id = False
                 return False
-        return {
-            'view_mode': 'form',
-            'res_model': self.model_id.model,
-            'res_id': self.res_id,
-            'type': 'ir.actions.act_window',
-        }
+            return {
+                'view_mode': 'form',
+                'res_model': self.model_id.model,
+                'res_id': self.res_id,
+                'type': 'ir.actions.act_window',
+            }
+        elif self.model_id and self.res_ids:
+            document = self.env[self.model_id.model].search([('id', 'in', self.res_ids.split(','))])
+            if not document:
+                self.res_ids = False
+                return False
+            return {
+                'view_mode': 'tree,form',
+                'res_model': self.model_id.model,
+                'domain': [('id', 'in', self.res_ids.split(','))],
+                'type': 'ir.actions.act_window',
+            }
 
     def process_document(self):
         for record in self:
@@ -93,14 +107,56 @@ class MeraikRequestResponse(models.Model):
                 vals_response['response'] = record.response_json
                 vals_response['state'] = record.state
                 document = self.env[record.model_id.model].search([('id', '=', record.res_id)])
+                res_ids = False
                 if document:
                     document.process_response(vals_response)
                 else:
-                    res_id = self.env[record.model_id.model].process_response(vals_response)
-                    record.write({'res_id': res_id})
+                    res_ids = self.env[record.model_id.model].process_response(vals_response)
+
+                    #if res_ids is a number or a list of numbers
+                    if isinstance(res_ids, int):
+                        record.write({'res_id': res_ids})
+                    elif isinstance(res_ids, list):
+                        record.write({'res_ids': ','.join(map(str, res_ids))})
                 if record.state == 'error_doc_processing':
                     record.with_context(process_document=False).write({'state': 'success'})
+                if not res_ids and not record.res_id:
+                    record.message_post(body=_('Error processing document: %s') % str(e))
+                    record.write({'state': 'error_doc_processing'})
             except Exception as e:
                 record.message_post(body=_('Error processing document: %s') % str(e))
                 record.write({'state': 'error_doc_processing'})
+                record.send_feedback_to_platform(str(e))
         return False
+
+    def create_attachment(self):
+        response = self.response_json
+        try:
+            response = json.loads(response)
+            doc_data = response.get('doc_data', False)
+            doc_name = response.get('doc_name', 'Attachment')
+            if doc_data:
+                attachment_data = {
+                    'name': doc_name,
+                    'type': 'binary',
+                    'datas': base64.b64decode(doc_data),
+                    'res_model': 'meraik.request.response',
+                    'res_id': self.id,
+                    'res_name': str(self.id),
+                }
+                self.env['ir.attachment'].create(attachment_data)
+        except Exception as e:
+            _logger.error('Error creating attachment: %s', str(e))
+            self.message_post(body=_('Error creating attachment: %s') % str(e))
+            return False
+
+    def send_feedback_to_platform(self, message_error):
+        for record in self:
+            try:
+                message = 'Client Error: %s' % message_error
+                remote_id = record.request_remote_id
+                uid, password, db, models = record.contract_id.get_conection_info()
+                models.execute_kw(db, uid, password, 'ai.contract.request.doc', 'write',
+                                           [[remote_id], {'state': 'error', 'response': message}])
+            except:
+                record.message_post(body=_('Error sending feedback to platform'))

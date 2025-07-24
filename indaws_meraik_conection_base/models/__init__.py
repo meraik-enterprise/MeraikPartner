@@ -5,3 +5,4 @@
 from . import meraik_contract
 from . import meraik_request_response
 from . import res_config_settings
+from . import res_partner

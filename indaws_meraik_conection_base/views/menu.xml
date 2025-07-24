@@ -2,6 +2,7 @@
 
      <menuitem id="menu_meraik_contract_root"
             name="Meraik"
+               parent="base.menu_administration"
             sequence="15">
 
          <menuitem id="menu_meraik_contract"
