@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vistas para WhatsApp Message heredadas -->
+        <!-- TODO: Agregar vistas específicas para la integración con Chatbot -->
+        <record id="chat_wapp_whatsapp_message_view_tree_inherit" model="ir.ui.view">
+            <field name="name">whatsapp.message.view.list.inherit.chatwapp</field>
+            <field name="model">whatsapp.message</field>
+            <field name="inherit_id" ref="whatsapp.whatsapp_message_view_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='create_uid']" position="replace">
+                    <field name="logical_author_id" widget="many2one_avatar"
+                        string="Autor lógico" />
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

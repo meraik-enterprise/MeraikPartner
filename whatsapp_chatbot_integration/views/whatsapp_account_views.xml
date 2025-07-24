@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Heredar vista de formulario de whatsapp.account -->
+        <record id="whatsapp_account_view_form_inherit_chatbot" model="ir.ui.view">
+            <field name="name">whatsapp.account.view.form.inherit.chatbot</field>
+            <field name="model">whatsapp.account</field>
+            <field name="inherit_id" ref="whatsapp.whatsapp_account_view_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <group string="Chatbot Integration">
+                        <field name="chatbot_enabled" />
+                        <field name="chatbot_id" invisible="not chatbot_enabled" />
+                        <field name="chatbot_api_key" password="True"
+                            invisible="not chatbot_enabled" />
+                        <field name="chatbot_silence_minutes" invisible="not chatbot_enabled" />
+                        <field name="chatbot_conversation_timeout_minutes"
+                            invisible="not chatbot_enabled" />
+                        <field name="chatbot_user_id" invisible="not chatbot_enabled"
+                            required="chatbot_enabled" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo> 

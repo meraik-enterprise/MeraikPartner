@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+chat-wapp.access_conversation_timeout_cron,access_conversation_timeout_cron,chat-wapp.model_conversation_timeout_cron,base.group_system,1,1,1,1

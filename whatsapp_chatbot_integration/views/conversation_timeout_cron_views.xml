@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista de formulario para conversation.timeout.cron -->
+        <record id="conversation_timeout_cron_view_form" model="ir.ui.view">
+            <field name="name">conversation.timeout.cron.view.form</field>
+            <field name="model">conversation.timeout.cron</field>
+            <field name="arch" type="xml">
+                <form string="Configuración de Limpieza de Conversaciones">
+                    <sheet>
+                        <group>
+                            <field name="name" />
+                            <field name="active" />
+                        </group>
+                        <group string="Acciones">
+                            <button name="execute_manual_cleanup"
+                                string="Ejecutar Limpieza Manual"
+                                type="object"
+                                class="btn-primary" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Vista de lista para conversation.timeout.cron -->
+        <record id="conversation_timeout_cron_view_tree" model="ir.ui.view">
+            <field name="name">conversation.timeout.cron.view.tree</field>
+            <field name="model">conversation.timeout.cron</field>
+            <field name="arch" type="xml">
+                <list string="Configuración de Limpieza">
+                    <field name="name" />
+                    <field name="active" />
+                </list>
+            </field>
+        </record>
+
+        <!-- Acción para conversation.timeout.cron -->
+        <record id="action_conversation_timeout_cron" model="ir.actions.act_window">
+            <field name="name">Configuración de Limpieza</field>
+            <field name="res_model">conversation.timeout.cron</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- Menú para conversation.timeout.cron -->
+        <menuitem id="menu_conversation_timeout_cron"
+            name="Limpieza de Conversaciones"
+            parent="mail.menu_root_discuss"
+            action="action_conversation_timeout_cron"
+            sequence="20" />
+    </data>
+</odoo> 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Heredar vista de formulario de discuss.channel -->
+        <record id="discuss_channel_form_inherit_chatbot" model="ir.ui.view">
+            <field name="name">discuss.channel.form.inherit.chatbot</field>
+            <field name="model">discuss.channel</field>
+            <field name="inherit_id" ref="mail.discuss_channel_view_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <group>
+                        <field name="conversation_id" placeholder="ID de conversación Chatbot" />
+                        <field name="last_human_intervention" readonly="1" />
+                        <field name="last_conversation_activity" readonly="1" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo> 

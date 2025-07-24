@@ -6,10 +6,12 @@ from odoo import fields, models, _
 import json
 import base64
 
+
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     response = fields.Text(string="Response", copy=False)
+
     def process_response(self, vals_response):
         response = vals_response.get('response', False)
         res_id = self.id if self.id else False
@@ -30,7 +32,8 @@ class SaleOrder(models.Model):
             description = item.get('description', False)
             product_uom = item.get('product_uom', False)
             if not product_uom:
-                product_uom = self.env['product.product'].browse(product_id).uom_id.id
+                product_uom = self.env['product.product'].browse(
+                    product_id).uom_id.id
             so_line_data.append((0, 0, {
                 'product_id': product_id,
                 'product_uom_qty': product_qty,
