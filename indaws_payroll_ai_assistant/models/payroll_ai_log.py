@@ -6,7 +6,8 @@ from odoo import fields, models, _
 import base64
 import json
 from odoo.exceptions import UserError
-import xmlrpc.client
+import io
+import zipfile
 
 class PayrollAiLog(models.Model):
     _name = 'payroll.ai.log'
@@ -17,6 +18,10 @@ class PayrollAiLog(models.Model):
     attachment_id = fields.Many2one(
         comodel_name="ir.attachment",
         string="Attachement",
+    )
+    attachment_encripted_id = fields.Many2one(
+        comodel_name="ir.attachment",
+        string="Attachement ZIP Encripted",
     )
     payroll_date = fields.Date(string="Payroll Date", copy=False)
     response = fields.Text(string="Response", copy=False)
@@ -90,6 +95,45 @@ class PayrollAiLog(models.Model):
             self.find_employee()
         return self.id
 
+    def create_zipped_attachment(self):
+        for record in self:
+            if not (record.employee_id and record.attachment_id):
+                continue
+
+            if not record.employee_id.identification_id and not record.employee_id.passport_id:
+                raise UserError(_("El empleado no tiene número de identificación para proteger el ZIP."))
+
+            try:
+                # 1. Obtener el PDF en binario
+                pdf_data = base64.b64decode(record.attachment_id.datas)
+                pdf_name = record.attachment_id.name or 'nomina.pdf'
+
+                password = record.employee_id.identification_id or record.employee_id.passport_id
+
+                # 2. Crear un ZIP en memoria con contraseña
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    zip_file.setpassword(password.encode('utf-8'))
+                    zip_file.writestr(pdf_name, pdf_data)
+
+                # 3. Crear adjunto en Odoo
+                zip_base64 = base64.b64encode(zip_buffer.getvalue())
+                zip_attachment = self.env['ir.attachment'].create({
+                    'name': f'Nomina_{record.payroll_date}_{record.employee_id.name}.zip',
+                    'datas': zip_base64.decode('utf-8'),
+                    'res_model': self._name,
+                    'res_id': record.id,
+                    'type': 'binary',
+                    'mimetype': 'application/zip',
+                })
+
+                # 4. Guardar referencia
+                record.write({'attachment_encripted_id': zip_attachment.id})
+                return zip_attachment
+
+            except Exception as e:
+                raise UserError(_('Error creando el archivo ZIP: %s') % str(e))
+
     def find_employee(self):
         for record in self:
             try:
@@ -101,6 +145,7 @@ class PayrollAiLog(models.Model):
                     record.write({'employee_id': employee_id, 'state': 'success', 'payroll_date':date})
                     attachment_name = 'Nomina_' + date + '_' + employee.name + '.pdf'
                     record.attachment_id.write({'name': attachment_name})
+                    record.create_zipped_attachment()
                     if self.env['ir.config_parameter'].sudo().get_param('send_mail_to_employee', False):
                         record.send_mail_to_employee()
                     record.write({'state':'success'})
@@ -118,9 +163,10 @@ class PayrollAiLog(models.Model):
         for record in self:
             if record.state == 'success' and record.employee_id and record.employee_id.work_email and not record.sent_to_employee:
                 template = self.env.ref('indaws_payroll_ai_assistant.email_template_payroll_ai')
-                mail_id = template.with_context(attachment_ids=record.attachment_id.ids).send_mail(record.id)
+                attachment_id = record.attachment_encripted_id.ids
+                mail_id = template.with_context(attachment_ids=attachment_id).send_mail(record.id)
                 mail = self.env['mail.mail'].browse(mail_id)
-                vals = {'model': 'payroll.ai.log', 'res_id': record.id, 'attachment_ids': [(6, 0, record.attachment_id.ids)]}
+                vals = {'model': 'payroll.ai.log', 'res_id': record.id, 'attachment_ids': [(6, 0, attachment_id)]}
                 send_mail_planning = self.env['ir.config_parameter'].sudo().get_param('send_mail_planning', 'ontime')
                 if send_mail_planning != 'ontime':
                     vals['scheduled_date'] = str(record.sent_to_employee_date)
