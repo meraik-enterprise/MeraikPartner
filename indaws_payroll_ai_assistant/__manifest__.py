@@ -11,6 +11,9 @@
     "website": "https://www.indaws.es/",
     "author": "MerAik, Aylen Garces, inDAWS",
     "depends": ["hr", "portal","documents","indaws_meraik_conection_base"],
+    "external_dependencies": {
+        "python": ["pyzipper"]
+    },
     "data": [
         "security/ir.model.access.csv",
         "security/security.xml",

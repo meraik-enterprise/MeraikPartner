@@ -7,7 +7,7 @@ import base64
 import json
 from odoo.exceptions import UserError
 import io
-import zipfile
+import pyzipper
 
 class PayrollAiLog(models.Model):
     _name = 'payroll.ai.log'
@@ -104,19 +104,17 @@ class PayrollAiLog(models.Model):
                 raise UserError(_("El empleado no tiene número de identificación para proteger el ZIP."))
 
             try:
-                # 1. Obtener el PDF en binario
                 pdf_data = base64.b64decode(record.attachment_id.datas)
                 pdf_name = record.attachment_id.name or 'nomina.pdf'
-
                 password = record.employee_id.identification_id or record.employee_id.passport_id
+                password = password.strip()
 
-                # 2. Crear un ZIP en memoria con contraseña
                 zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                with pyzipper.AESZipFile(zip_buffer, 'w', compression=pyzipper.ZIP_LZMA,
+                                         encryption=pyzipper.WZ_AES) as zip_file:
                     zip_file.setpassword(password.encode('utf-8'))
                     zip_file.writestr(pdf_name, pdf_data)
 
-                # 3. Crear adjunto en Odoo
                 zip_base64 = base64.b64encode(zip_buffer.getvalue())
                 zip_attachment = self.env['ir.attachment'].create({
                     'name': f'Nomina_{record.payroll_date}_{record.employee_id.name}.zip',
@@ -127,12 +125,11 @@ class PayrollAiLog(models.Model):
                     'mimetype': 'application/zip',
                 })
 
-                # 4. Guardar referencia
                 record.write({'attachment_encripted_id': zip_attachment.id})
                 return zip_attachment
 
             except Exception as e:
-                raise UserError(_('Error creando el archivo ZIP: %s') % str(e))
+                raise UserError(_('Error creando ZIP cifrado: %s') % str(e))
 
     def find_employee(self):
         for record in self:

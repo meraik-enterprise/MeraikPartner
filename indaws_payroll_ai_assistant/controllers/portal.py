@@ -21,7 +21,7 @@ class CustomerPortal(portal.CustomerPortal):
         if employee_id:
             payroll_ai_log_ids = employee_id.payroll_ai_log_ids
             if payroll_ai_log_ids:
-                doc_payroll_ids = payroll_ai_log_ids.mapped('attachment_id')
+                doc_payroll_ids = payroll_ai_log_ids.mapped('attachment_encripted_id')
                 doc_payroll_count = len(doc_payroll_ids.ids)
         return doc_payroll_count if only_count else doc_payroll_ids
 
