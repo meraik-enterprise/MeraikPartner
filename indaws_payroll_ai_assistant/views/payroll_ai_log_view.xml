@@ -20,6 +20,7 @@
                                 <field name="employee_id" readonly="1"/>
                                 <field name="payroll_date" readonly="1"/>
                                 <field name="attachment_id" readonly="1"/>
+                                <field name="attachment_encripted_id"/>
 <!--                                <field name="sent_to_employee" readonly="1"/>-->
                                 <field name="sent_to_employee_date" readonly="1" invisible="not sent_to_employee_date"/>
                                 <field name="num_tries" readonly="1"/>
