@@ -35,9 +35,10 @@ class MeraikContract(models.Model):
         models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url))
         return uid, password,db,models
 
-    def create_request(self, data=False,inputs={},output_json={},res_id=False):
+    def create_request(self, data=False,data_name=False,inputs={},output_json={},res_id=False):
         uid, password, db, models = self.get_conection_info()
         vals = {'data': data,
+                'data_name': data_name or 'document',
                 'inputs': inputs,
                 'request': output_json}
 

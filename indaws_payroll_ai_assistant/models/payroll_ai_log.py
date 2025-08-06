@@ -55,7 +55,7 @@ class PayrollAiLog(models.Model):
         return False
 
     def mass_process_attachment_with_ai(self, limit=5):
-        log_ids = self.env['payroll.ai.log'].search(['|',('state','in',['pending','processing']),'&',('state','in',['error','error_processing']),('num_tries','<',3)], limit=limit)
+        log_ids = self.env['payroll.ai.log'].search(['|',('state','in',['pending']),'&',('state','in',['error','error_processing']),('num_tries','<',3)], limit=limit)
         for log in log_ids:
             if log.state != 'error_processing':
                 log.write({'state': 'processing'})
@@ -66,20 +66,21 @@ class PayrollAiLog(models.Model):
             if record.state in ['pending','processing'] or (record.state == 'error' and record.num_tries < 3):
                 try:
                     base64_image = self.get_image_from_pdf(record.attachment_id)
+                    dataname = record.attachment_id.name or 'nomina.pdf'
                     list_of_ids = {'input_employee_ids': self.get_list_of_ids()}
                     list_of_ids = json.dumps(list_of_ids)
                     parse_info = self.get_parse_info()
-                    request_id = self.create_request(base64_image, list_of_ids, parse_info)
+                    request_id = self.create_request(base64_image, dataname,list_of_ids, parse_info)
                     record.write({'state': 'processing', 'meraik_request_id': request_id, 'response': False})
                 except Exception as e:
                     record.write({'response': e, 'state': 'error', 'num_tries': record.num_tries + 1})
                     # print(e)
                     return False
 
-    def create_request(self, base64_image, inputs={}, output_json={}):
+    def create_request(self, base64_image, dataname, inputs={}, output_json={}):
         contract = self.env['meraik.contract'].search([('model_id.model', '=', self._name)], limit=1)
         if contract:
-            request_id = contract.create_request(base64_image, inputs, output_json, self.id)
+            request_id = contract.create_request(base64_image, dataname, inputs, output_json, self.id)
             return request_id
         return False
 
